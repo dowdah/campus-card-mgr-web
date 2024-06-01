@@ -1,0 +1,16 @@
+{% extends "/auth/email_base.html" %}
+{% block title %}Confirm your email address{% endblock %}
+{% block content %}
+    <p>Hello, {{ user.username }}!  Please click [Confirm] below to confirm your email address. Note that any activity will be blocked until you finish this step.</p>
+    <div style="text-align: center;
+    border-radius: 2px;
+    background-color: #5887f5;
+    height: fit-content;
+    width: fit-content;
+    padding: 3px 30px;">
+        <p><a href="{{ url_for('auth.confirm', token=token, _external=True) }}" style="color: white;text-decoration: none">Confirm</a></p>
+    </div>
+    <p>Alternatively, you can copy and paste the following link in your browser's address bar:</p>
+    <p>{{ url_for('auth.confirm', token=token, _external=True) }}</p>
+    <p>This link is valid for the next 1 hour. You can request for another confirmation email anytime at our website.</p>
+{% endblock %}
