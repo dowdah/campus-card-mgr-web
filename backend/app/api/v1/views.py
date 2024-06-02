@@ -24,6 +24,7 @@ def before_request():
 
 @api_v1.route('/test', methods=['GET', 'POST'])
 def test():
+    # 测试用路由，生产环境中应删除
     return {'status': 'success', 'msg': g.temp}
 
 
@@ -36,6 +37,31 @@ def get_users():
             'code': 200,
             'users': [user.to_json() for user in users]
         }
+    else:
+        response_json = {
+            'success': False,
+            'code': 403,
+            'msg': 'Permission denied'
+        }
+    return jsonify(response_json), response_json['code']
+
+
+@api_v1.route('/user/<int:id>')
+def get_user(id):
+    if g.current_user.can(Permission.VIEW_USER_INFO):
+        user = User.query.filter_by(id=id).first()
+        if user:
+            response_json = {
+                'success': True,
+                'code': 200,
+                'user': user.to_json()
+            }
+        else:
+            response_json = {
+                'success': False,
+                'code': 404,
+                'msg': 'User not found'
+            }
     else:
         response_json = {
             'success': False,
@@ -64,7 +90,8 @@ def login():
                 'code': 200,
                 'msg': 'Login successfully',
                 'token': user.generate_auth_token(),
-                'expiration': current_app.config['API_TOKEN_EXPIRATION']
+                'expiration': current_app.config['API_TOKEN_EXPIRATION'],
+                'user': user.to_json()
             }
         else:
             response_json = {
