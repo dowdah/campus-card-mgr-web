@@ -3,6 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask import current_app
 from itsdangerous.url_safe import URLSafeTimedSerializer as Serializer
 import datetime
+import random, string
 
 
 class Role(db.Model):
@@ -108,8 +109,8 @@ class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     alternative_id = db.Column(db.String(64), unique=True, index=True)
-    username = db.Column(db.String(64), unique=True, index=True)
-    email = db.Column(db.String(64), unique=True, index=True)
+    username = db.Column(db.String(64), unique=True, index=True, nullable=False)
+    email = db.Column(db.String(64), unique=True, index=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     password_hash = db.Column(db.String(128))
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
@@ -120,6 +121,8 @@ class User(db.Model):
         super(User, self).__init__(**kwargs)
         if self.role is None:
             self.role = Role.query.filter_by(default=True).first()
+        if self.alternative_id is None:
+            self.alternative_id = User.generate_alternative_id()
 
     def __repr__(self):
         return '<User %r>' % self.username
@@ -160,9 +163,6 @@ class User(db.Model):
         else:
             return False
 
-    def get_id(self):
-        return self.alternative_id
-
     def can(self, perm):
         return self.role is not None and self.role.has_permission(perm)
 
@@ -187,6 +187,13 @@ class User(db.Model):
             return user
         else:
             return None
+
+    @staticmethod
+    def generate_alternative_id(length=12):
+        alternative_id = ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+        while User.query.filter_by(alternative_id=alternative_id).first() is not None:
+            alternative_id = ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+        return alternative_id
 
     def get_cards(self):
         return self.cards.all()
@@ -288,6 +295,7 @@ class Transaction(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     amount = db.Column(db.Float, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    comments = db.Column(db.Text)
 
     def __repr__(self):
         return f'<Transaction {self.id} - {self.amount}>'
@@ -298,6 +306,7 @@ class FinancialReport(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     report_data = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    comments = db.Column(db.Text)
 
     def __repr__(self):
         return f'<FinancialReport {self.id}>'
