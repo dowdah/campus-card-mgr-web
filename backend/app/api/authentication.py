@@ -11,16 +11,16 @@ from .v1 import api_v1
 
 
 @auth.verify_password
-def verify_password(alternative_id_or_token, password):
+def verify_password(username_or_token, password):
     # 添加 g.token_used 的目的是为了让视图函数区分是使用 token 还是密码进行认证
     # 进一步防止用户绕过令牌过期机制
     g.is_anonymous = True
     g.token_used = False
     if request.endpoint in BYPASS_AUTH:
         return True
-    if alternative_id_or_token:
+    if username_or_token:
         if password:
-            user = User.query.filter_by(alternative_id=alternative_id_or_token).first()
+            user = User.query.filter_by(username=username_or_token).first()
             if user is None:
                 return False
             if not user.verify_password(password):
@@ -44,7 +44,7 @@ def unauthorized():
     response_json = {
         'success': False,
         'code': 401,
-        'description': 'Unauthorized access'
+        'description': 'Invalid credentials'
     }
     return jsonify(response_json), 401
 
