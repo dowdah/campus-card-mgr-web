@@ -30,7 +30,7 @@ def verify_password(username_or_token, password):
             return True
         else:
             g.token_used = True
-            user = User.verify_auth_token(alternative_id_or_token)
+            user = User.verify_auth_token(username_or_token)
             if user is None:
                 return False
             g.is_anonymous = False
