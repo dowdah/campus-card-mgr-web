@@ -44,7 +44,7 @@ def unauthorized():
     response_json = {
         'success': False,
         'code': 401,
-        'description': 'Invalid credentials'
+        'msg': 'Invalid credentials'
     }
     return jsonify(response_json), 401
 
@@ -57,6 +57,6 @@ def before_request():
         response_json = {
             'success': False,
             'code': 403,
-            'description': 'User is not confirmed'
+            'msg': 'User is not confirmed'
         }
         return jsonify(response_json), 403

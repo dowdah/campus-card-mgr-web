@@ -10,7 +10,7 @@ def generic_error(e):
         "success": False,
         "code": e.code,
         "name": e.name,
-        "description": e.description,
+        "msg": e.description,
     })
     response.content_type = "application/json"
     return response

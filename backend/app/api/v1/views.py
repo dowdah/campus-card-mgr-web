@@ -40,7 +40,7 @@ def get_users():
         response_json = {
             'success': False,
             'code': 403,
-            'description': 'Permission denied'
+            'msg': 'Permission denied'
         }
     return jsonify(response_json), response_json['code']
 
@@ -62,7 +62,7 @@ def login():
             response_json = {
                 'success': True,
                 'code': 200,
-                'description': 'Login successfully',
+                'msg': 'Login successfully',
                 'token': user.generate_auth_token(),
                 'expiration': current_app.config['API_TOKEN_EXPIRATION']
             }
@@ -70,13 +70,13 @@ def login():
             response_json = {
                 'success': False,
                 'code': 401,
-                'description': 'Invalid credentials'
+                'msg': 'Invalid credentials'
             }
     else:
         response_json = {
             'success': False,
             'code': 400,
-            'description': 'Invalid parameters'
+            'msg': 'Invalid parameters'
         }
     return jsonify(response_json), response_json['code']
 
@@ -87,12 +87,12 @@ def get_token():
         response_json = {
             'success': False,
             'code': 403,
-            'description': 'Unauthorized access'
+            'msg': 'Unauthorized access'
         }
     response_json = {
         'success': True,
         'code': 200,
-        'description': 'Token generated successfully',
+        'msg': 'Token generated successfully',
         'token': g.current_user.generate_auth_token(),
         'expiration': current_app.config['API_TOKEN_EXPIRATION']
     }
