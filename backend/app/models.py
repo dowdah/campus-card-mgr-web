@@ -110,6 +110,7 @@ class User(db.Model):
     alternative_id = db.Column(db.String(64), unique=True, index=True)
     username = db.Column(db.String(64), unique=True, index=True)
     email = db.Column(db.String(64), unique=True, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     password_hash = db.Column(db.String(128))
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
     cards = db.relationship('Card', backref='user', lazy='dynamic')
@@ -138,7 +139,9 @@ class User(db.Model):
         s = Serializer(current_app.config['SECRET_KEY'])
         return s.dumps({'alternative_id': self.alternative_id})
 
-    def validate_token(self, token, expiration=3600):
+    def validate_token(self, token, expiration=None):
+        if expiration is None:
+            expiration = current_app.config['EMAIL_TOKEN_EXPIRATION']
         s = Serializer(current_app.config['SECRET_KEY'])
         try:
             data = s.loads(token.encode('utf-8'), max_age=expiration)
@@ -171,7 +174,9 @@ class User(db.Model):
         return s.dumps({'alternative_id': self.alternative_id})
 
     @staticmethod
-    def verify_auth_token(token, expiration=3600):
+    def verify_auth_token(token, expiration=None):
+        if expiration is None:
+            expiration = current_app.config['API_TOKEN_EXPIRATION']
         s = Serializer(current_app.config['SECRET_KEY'])
         try:
             data = s.loads(token.encode('utf-8'), max_age=expiration)
@@ -188,6 +193,19 @@ class User(db.Model):
 
     def get_card(self, card_id):
         return self.cards.filter_by(id=card_id).first()
+
+    def to_json(self):
+        json_user = {
+            'username': self.username,
+            'alternative_id': self.alternative_id,
+            'created_at': self.created_at,
+            'id': self.id,
+            'email': self.email,
+            'role': self.role.name,
+            'confirmed': self.confirmed,
+            'cards': [card.to_json() for card in self.get_cards()]
+        }
+        return json_user
 
 
 class Card(db.Model):
@@ -251,3 +269,35 @@ class Card(db.Model):
 
     def get_owner(self):
         return User.query.get(self.user_id)
+
+    def to_json(self):
+        json_card = {
+            'owner_username': self.get_owner().username,
+            'id': self.id,
+            'balance': self.balance,
+            'status': self.status,
+            'created_at': self.created_at,
+            'expires_at': self.expires_at
+        }
+        return json_card
+
+
+class Transaction(db.Model):
+    __tablename__ = 'transactions'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Transaction {self.id} - {self.amount}>'
+
+
+class FinancialReport(db.Model):
+    __tablename__ = 'financial_reports'
+    id = db.Column(db.Integer, primary_key=True)
+    report_data = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+
+    def __repr__(self):
+        return f'<FinancialReport {self.id}>'
