@@ -21,7 +21,9 @@ class Config:
     MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'True').lower() in \
         ['True', 'on', '1']
     MAIL_ADMIN = os.environ.get('MAIL_ADMIN', 'strangecarhead@foxmail.com')
-    MAIL_SUBJECT_PREFIX = '[DOWDAH]'
+    MAIL_SUBJECT_PREFIX = '[一卡通信息管理系统]'
+    API_TOKEN_EXPIRATION = os.environ.get('TOKEN_EXPIRATION', 3600)  # API token 过期时间, 默认为 1 小时
+    EMAIL_TOKEN_EXPIRATION = os.environ.get('EMAIL_TOKEN_EXPIRATION', 3600)  # 邮件 token 过期时间, 默认为 1 小时
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     @staticmethod
