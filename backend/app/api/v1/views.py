@@ -1,6 +1,6 @@
 from . import api_v1
 from flask import jsonify, request, g, abort, current_app
-from ...models import User
+from ...models import User, Permission
 
 
 @api_v1.before_request
@@ -29,8 +29,20 @@ def test():
 
 @api_v1.route('/users')
 def get_users():
-    users = User.query.all()
-    return jsonify([{'username': user.username, 'email': user.email} for user in users])
+    if g.current_user.can(Permission.VIEW_USER_INFO):
+        users = User.query.all()
+        response_json = {
+            'success': True,
+            'code': 200,
+            'users': [user.to_json() for user in users]
+        }
+    else:
+        response_json = {
+            'success': False,
+            'code': 403,
+            'description': 'Permission denied'
+        }
+    return jsonify(response_json), response_json['code']
 
 
 @api_v1.route('/login', methods=['POST'])
