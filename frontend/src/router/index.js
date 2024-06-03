@@ -7,7 +7,7 @@ import store from '../store';
 
 const routes = [
   { path: '/', name: 'Home', component: Home },
-  { path: '/login', name: 'Login', component: Login },
+  { path: '/login', name: 'Login', component: Login, meta: { blockWhenAuthenticated: true }},
   {
     path: '/dashboard',
     name: 'Dashboard',
@@ -33,7 +33,16 @@ router.beforeEach(async (to, from, next) => {
       console.log('Authenticated, proceeding to route');
       next();
     }
-  } else {
+  } else if (to.matched.some(record => record.meta.blockWhenAuthenticated)) {
+    if (store.getters.isAuthenticated) {
+      console.log('Already authenticated, redirecting to Dashboard');
+      next({ name: 'Dashboard' });
+    } else {
+      console.log('Not authenticated, proceeding to route');
+      next();
+    }
+  }
+  else {
     next();
   }
 });
