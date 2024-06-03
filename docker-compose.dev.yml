@@ -7,6 +7,7 @@ services:
       - dev
     environment:
       - NODE_ENV=development
+      - VUE_APP_TITLE=${VUE_APP_TITLE}
     env_file:
       - .env
     volumes:
