@@ -108,14 +108,17 @@ class Permission:
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
-    alternative_id = db.Column(db.String(64), unique=True, index=True)
-    username = db.Column(db.String(64), unique=True, index=True, nullable=False)
-    email = db.Column(db.String(64), unique=True, index=True, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
-    password_hash = db.Column(db.String(128))
-    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
-    cards = db.relationship('Card', backref='user', lazy='dynamic')
-    confirmed = db.Column(db.Boolean, default=False)
+    alternative_id = db.Column(db.String(64), unique=True, index=True)  # 用户的替代ID，用于生成token，初始化时自动生成
+    student_id = db.Column(db.String(64), unique=True, index=True, nullable=False)  # 学号
+    name = db.Column(db.String(64), unique=False, index=True, nullable=False)  # 姓名
+    email = db.Column(db.String(64), unique=True, index=True, nullable=False)  # 邮箱，用于二步验证
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)  # 创建时间
+    password_hash = db.Column(db.String(128))  # 密码哈希值
+    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))  # 用户的身份
+    cards = db.relationship('Card', backref='user', lazy='dynamic')  # 用户的一卡通
+    confirmed = db.Column(db.Boolean, default=False)  # 是否已经通过邮箱验证
+    transactions = db.relationship('Transaction', backref='user', lazy='dynamic')  # 用户的交易记录
+    comments = db.Column(db.Text, nullable=True, default='')  # 备注(管理员添加)
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
@@ -125,7 +128,7 @@ class User(db.Model):
             self.alternative_id = User.generate_alternative_id()
 
     def __repr__(self):
-        return '<User %r>' % self.username
+        return '<User %s(%s)>' % (self.name, self.student_id)
 
     @property
     def password(self):
@@ -195,43 +198,89 @@ class User(db.Model):
             alternative_id = ''.join(random.choices(string.ascii_letters + string.digits, k=length))
         return alternative_id
 
-    def get_cards(self):
-        return self.cards.all()
+    @property
+    def card_list(self):
+        return self.cards.order_by(Card.created_at.desc()).all()
 
-    def get_card(self, card_id):
-        return self.cards.filter_by(id=card_id).first()
+    @property
+    def all_transaction_list(self):
+        return self.transactions.order_by(Transaction.created_at.desc()).all()
 
-    def to_json(self):
+    @property
+    def latest_transaction_list(self):
+        # 因为动张记录可能会很多，所以只返回最新的5条
+        return self.transactions.order_by(Transaction.created_at.desc()).limit(5).all()
+
+    def create_card(self):
+        card = Card(user=self)
+        db.session.add(card)
+        db.session.commit()
+        return card
+
+    def to_json(self, include_sensitive=False, include_related=True):
         json_user = {
-            'username': self.username,
+            'name': self.name,
             'alternative_id': self.alternative_id,
+            'student_id': self.student_id,
             'created_at': self.created_at,
             'id': self.id,
             'email': self.email,
             'role': self.role.name,
-            'confirmed': self.confirmed,
-            'cards': [card.to_json() for card in self.get_cards()]
+            'confirmed': self.confirmed
         }
+        if include_related:
+            related_json = {
+                'cards': [card.to_json(include_related=False) for card in self.card_list],
+                'latest_transactions': [transaction.to_json(include_related=False, include_sensitive=include_sensitive)
+                                        for transaction in self.latest_transaction_list]
+            }
+            json_user.update(related_json)
+        if include_sensitive:
+            sensitive_json = {
+                'comments': self.comments
+            }
+            json_user.update(sensitive_json)
         return json_user
 
 
 class Card(db.Model):
     __tablename__ = 'cards'
     id = db.Column(db.Integer, primary_key=True)
-    balance = db.Column(db.Float, default=0.0)  # 卡片余额，单位为元
+    _balance = db.Column(db.Float, default=0.0)  # 卡片余额，单位为元
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    transactions = db.relationship('Transaction', backref='card', lazy='dynamic')  # 卡片的交易记录
     status = db.Column(db.String(64), default='active')  # 卡片状态，active: 正常，lost: 挂失, inactive: 失效
-    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)  # 创建时间
     expires_at = db.Column(db.DateTime, default=lambda: datetime.datetime.utcnow() + datetime.timedelta(days=4 * 365))
     # 卡片有效期，默认为4年
 
     def __repr__(self):
         return '<Card %r>' % self.id
 
-    def recharge(self, amount):
+    @property
+    def balance(self):
+        return self._balance
+
+    @balance.setter
+    def balance(self, value):
+        if value >= 0:
+            offset = value - self._balance
+            self._balance = value
+            if offset != 0:
+                comments = '由系统做出的更改'
+                t = Transaction(user=self.user, card=self, amount=offset, comments=comments)
+                db.session.add(t)
+                db.session.commit()
+        else:
+            raise ValueError('Balance must be non-negative.')
+
+    def recharge(self, amount, comments=''):
         if amount > 0:
             self.balance += amount
             db.session.add(self)
+            t = Transaction(user=self.user, card=self, amount=amount, comments=comments)
+            db.session.add(t)
+            db.session.commit()
             return True
         return False
 
@@ -250,10 +299,13 @@ class Card(db.Model):
         db.session.add(self)
         return True
 
-    def consume(self, amount):
+    def consume(self, amount, comments=''):
         if 0 < amount <= self.balance:
             self.balance -= amount
             db.session.add(self)
+            t = Transaction(user=self.user, card=self, amount=-amount, comments=comments)
+            db.session.add(t)
+            db.session.commit()
             return True
         return False
 
@@ -263,9 +315,6 @@ class Card(db.Model):
     def is_lost(self):
         return self.status == 'lost'
 
-    def is_inactive(self):
-        return self.status == 'inactive'
-
     def is_expired(self):
         return self.expires_at < datetime.datetime.utcnow()
 
@@ -274,18 +323,33 @@ class Card(db.Model):
         db.session.add(self)
         return True
 
-    def get_owner(self):
-        return User.query.get(self.user_id)
+    @property
+    def all_transaction_list(self):
+        return self.transactions.order_by(Transaction.created_at.desc()).all()
 
-    def to_json(self):
+    @property
+    def latest_transaction_list(self):
+        # 因为动张记录可能会很多，所以只返回最新的5条
+        return self.transactions.order_by(Transaction.created_at.desc()).limit(5).all()
+
+    def to_json(self, include_related=True):
         json_card = {
-            'owner_username': self.get_owner().username,
             'id': self.id,
-            'balance': self.balance,
+            'balance': '%.2f' % self.balance,
             'status': self.status,
             'created_at': self.created_at,
-            'expires_at': self.expires_at
+            'expires_at': self.expires_at,
+            'is_active': self.is_active(),
+            'is_lost': self.is_lost(),
+            'is_expired': self.is_expired()
         }
+        if include_related:
+            related_json = {
+                'latest_transactions': [transaction.to_json(include_related=False)
+                                        for transaction in self.latest_transaction_list],
+                'user': self.user.to_json(include_related=False)
+            }
+            json_card.update(related_json)
         return json_card
 
 
@@ -293,12 +357,32 @@ class Transaction(db.Model):
     __tablename__ = 'transactions'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    card_id = db.Column(db.Integer, db.ForeignKey('cards.id'), nullable=False)
     amount = db.Column(db.Float, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
-    comments = db.Column(db.Text)
+    comments = db.Column(db.Text, nullable=True, default='')
 
     def __repr__(self):
-        return f'<Transaction {self.id} - {self.amount}>'
+        return f'<Transaction {self.id}>'
+
+    def to_json(self, include_related=True, include_sensitive=False):
+        json_transaction = {
+            'id': self.id,
+            'amount': '%.2f' % self.amount,
+            'created_at': self.created_at
+        }
+        if include_related:
+            related_json = {
+                'user': self.user.to_json(include_related=False),
+                'card': self.card.to_json(include_related=False)
+            }
+            json_transaction.update(related_json)
+        if include_sensitive:
+            sensitive_json = {
+                'comments': self.comments
+            }
+            json_transaction.update(sensitive_json)
+        return json_transaction
 
 
 class FinancialReport(db.Model):
@@ -306,7 +390,7 @@ class FinancialReport(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     report_data = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
-    comments = db.Column(db.Text)
+    comments = db.Column(db.Text, nullable=True, default='')
 
     def __repr__(self):
         return f'<FinancialReport {self.id}>'
