@@ -35,7 +35,7 @@ def get_users():
         response_json = {
             'success': True,
             'code': 200,
-            'users': [user.to_json() for user in users]
+            'users': [user.to_json(include_sensitive=True) for user in users]
         }
     else:
         response_json = {
@@ -54,7 +54,7 @@ def get_user(id):
             response_json = {
                 'success': True,
                 'code': 200,
-                'user': user.to_json()
+                'user': user.to_json(include_sensitive=True)
             }
         else:
             response_json = {
@@ -80,10 +80,10 @@ def login():
     401: 用户名或密码错误
     """
     data = g.data
-    username = data.get('username')
+    student_id = data.get('student_id')
     password = data.get('password')
-    if username and password:
-        user = User.query.filter_by(username=username).first()
+    if student_id and password:
+        user = User.query.filter_by(student_id=student_id).first()
         if user and user.verify_password(password):
             response_json = {
                 'success': True,
