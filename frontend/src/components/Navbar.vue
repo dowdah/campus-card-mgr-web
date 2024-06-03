@@ -50,11 +50,11 @@ a {
 }
 
 a:hover {
-  color: #ff6f61;
+  color: #6661ff;
   text-decoration: none;
 }
 
 a.router-link-exact-active {
-  border-bottom: 2px solid #ff6f61;
+  border-bottom: 2px solid #007bff;
 }
 </style>
