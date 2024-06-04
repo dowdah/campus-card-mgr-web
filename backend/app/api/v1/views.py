@@ -1,19 +1,24 @@
-from . import api_v1
-from flask import jsonify, request, g, abort, current_app
+from . import v1_bp
+from flask import jsonify, request, g, abort, current_app, abort
 from ...models import User, Permission
 
 
-@api_v1.before_request
+@v1_bp.before_request
 def before_request():
     # 将 application/json 与 multipart/form-data 的数据统一处理
     # g.temp = request.content_type
-    if request.method == 'POST':
-        if 'application/json' in request.content_type:
-            g.data = request.get_json()
-            g.files = None
-        elif 'multipart/form-data' in request.content_type:
-            g.data = request.form.to_dict()
-            g.files = request.files
+    methods_with_data = ['POST', 'PUT', 'PATCH']
+    if request.method in methods_with_data:
+        if request.content_type:
+            if 'application/json' in request.content_type:
+                g.data = request.get_json()
+                g.files = None
+            elif 'multipart/form-data' in request.content_type:
+                g.data = request.form.to_dict()
+                g.files = request.files
+            else:
+                g.data = None
+                g.files = None
         else:
             g.data = None
             g.files = None
@@ -22,115 +27,8 @@ def before_request():
         g.files = None
 
 
-@api_v1.route('/test', methods=['GET', 'POST'])
+@v1_bp.route('/test', methods=['GET', 'POST'])
 def test():
     # 测试用路由，生产环境中应删除
-    return {'status': 'success', 'msg': g.temp}
-
-
-@api_v1.route('/users')
-def get_users():
-    if g.current_user.can(Permission.VIEW_USER_INFO):
-        users = User.query.all()
-        response_json = {
-            'success': True,
-            'code': 200,
-            'users': [user.to_json(include_sensitive=True) for user in users]
-        }
-    else:
-        response_json = {
-            'success': False,
-            'code': 403,
-            'msg': 'Permission denied'
-        }
-    return jsonify(response_json), response_json['code']
-
-
-@api_v1.route('/user/<int:id>')
-def get_user(id):
-    if g.current_user.can(Permission.VIEW_USER_INFO):
-        user = User.query.filter_by(id=id).first()
-        if user:
-            response_json = {
-                'success': True,
-                'code': 200,
-                'user': user.to_json(include_sensitive=True)
-            }
-        else:
-            response_json = {
-                'success': False,
-                'code': 404,
-                'msg': 'User not found'
-            }
-    else:
-        response_json = {
-            'success': False,
-            'code': 403,
-            'msg': 'Permission denied'
-        }
-    return jsonify(response_json), response_json['code']
-
-
-@api_v1.route('/login', methods=['POST'])
-def login():
-    """
-    code:
-    200: 登录成功
-    400: 参数错误
-    401: 用户名或密码错误
-    """
-    data = g.data
-    student_id = data.get('student_id')
-    password = data.get('password')
-    if student_id and password:
-        user = User.query.filter_by(student_id=student_id).first()
-        if user and user.verify_password(password):
-            response_json = {
-                'success': True,
-                'code': 200,
-                'msg': 'Login successfully',
-                'token': user.generate_auth_token(),
-                'expiration': current_app.config['API_TOKEN_EXPIRATION'],
-                'user': user.to_json()
-            }
-        else:
-            response_json = {
-                'success': False,
-                'code': 401,
-                'msg': 'Invalid credentials'
-            }
-    else:
-        response_json = {
-            'success': False,
-            'code': 400,
-            'msg': 'Invalid parameters'
-        }
-    return jsonify(response_json), response_json['code']
-
-
-@api_v1.route('/token')
-def get_token():
-    if g.current_user.is_anonymous or g.token_used:
-        response_json = {
-            'success': False,
-            'code': 403,
-            'msg': 'Unauthorized access'
-        }
-    response_json = {
-        'success': True,
-        'code': 200,
-        'msg': 'Token generated successfully',
-        'token': g.current_user.generate_auth_token(),
-        'expiration': current_app.config['API_TOKEN_EXPIRATION']
-    }
-    return jsonify(response_json), response_json['code']
-
-
-@api_v1.route('/me')
-def get_me():
-    response_json = {
-        'success': True,
-        'code': 200,
-        'user': g.current_user.to_json()
-    }
-    return jsonify(response_json), response_json['code']
+    # return {'status': 'success', 'msg': g.temp}
+    return abort(403)

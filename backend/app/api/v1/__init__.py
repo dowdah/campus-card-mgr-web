@@ -1,5 +1,10 @@
 from flask import Blueprint
 
-api_v1 = Blueprint('api_v1', __name__)
+v1_bp = Blueprint('v1', __name__)
 
 from . import errors, views
+from .auth import auth_bp
+from .user import user_bp
+
+v1_bp.register_blueprint(auth_bp, url_prefix='/auth')
+v1_bp.register_blueprint(user_bp, url_prefix='/user')

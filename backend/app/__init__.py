@@ -14,8 +14,8 @@ def create_app(config_name):
     config[config_name].init_app(app)
     mail.init_app(app)
     db.init_app(app)
-    from .api.v1 import api_v1 as api_blueprint_v1
-    app.register_blueprint(api_blueprint_v1, url_prefix='/api/v1')
+    from .api import api_bp
+    app.register_blueprint(api_bp, url_prefix='/api')
 
     @app.context_processor
     def inject_variables():

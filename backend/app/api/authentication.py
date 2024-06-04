@@ -1,13 +1,11 @@
 from flask_httpauth import HTTPBasicAuth
 from flask import g, abort, request, jsonify
 from ..models import User
+from . import api_bp
 
 
 auth = HTTPBasicAuth()
-BYPASS_AUTH = ['api_v1.login', 'api_v1.test']
-
-
-from .v1 import api_v1
+BYPASS_AUTH = ['api.v1.auth.login', 'api.v1.test']
 
 
 @auth.verify_password
@@ -49,7 +47,7 @@ def unauthorized():
     return jsonify(response_json), 401
 
 
-@api_v1.before_request
+@api_bp.before_request
 @auth.login_required
 def before_request():
     if not g.is_anonymous and not g.current_user.confirmed:

@@ -3,6 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from faker import Faker
 from . import db
 from .models import User, Card, Role
+from time import sleep
 
 
 def users(count=20):
@@ -29,19 +30,28 @@ def cards():
     fake = Faker()
     user_list = User.query.all()
     for user in user_list:
-        if len(user.card_list) > 0:
+        if len(user.card_list) > 1:
             continue
-        created_at = fake.date_time_this_year()
-        expires_at = created_at.replace(year=created_at.year + 4)
-        c = Card(user=user,
-                 created_at=created_at,
-                 expires_at=expires_at)
-        db.session.add(c)
+        for i in range(0, randint(1, 2)):
+            created_at = fake.date_time_this_year()
+            expires_at = created_at.replace(year=created_at.year + 4)
+            c = Card(user=user,
+                     created_at=created_at,
+                     expires_at=expires_at)
+            db.session.add(c)
     db.session.commit()
     for card in Card.query.all():
         card.balance = randint(0, 1000)
-        db.session.add(card)
-    db.session.commit()
+
+
+def transactions():
+    fake = Faker()
+    card_list = Card.query.all()
+    for card in card_list:
+        for i in range(0, randint(1, 3)):
+            offset = randint(-card.balance, 100)
+            card.balance += offset
+            sleep(1)
 
 
 def main():
@@ -59,3 +69,4 @@ def main():
     u_2.create_card()
     users()
     cards()
+    transactions()

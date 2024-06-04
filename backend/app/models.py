@@ -12,7 +12,7 @@ class Role(db.Model):
     name = db.Column(db.String(64), unique=True)
     default = db.Column(db.Boolean, default=False, index=True)
     permissions = db.Column(db.Integer)
-    users = db.relationship('User', backref='role', lazy='dynamic')
+    users = db.relationship('User', backref='role', lazy='dynamic', cascade='all, delete-orphan')
 
     def __repr__(self):
         return '<Role %r>' % self.name
@@ -64,7 +64,7 @@ class Role(db.Model):
                 Permission.RECHARGE_CARD,
                 Permission.REPORT_LOST_CARD,
                 Permission.MODIFY_USER_INFO,
-                Permission.DELETE_USER_INFO,
+                Permission.DELETE_USER,
                 Permission.VIEW_USER_INFO,
                 Permission.GENERATE_REPORTS,
                 Permission.EXPORT_REPORTS,
@@ -94,7 +94,7 @@ class Permission:
     RECHARGE_CARD = 4          # 充值卡片
     REPORT_LOST_CARD = 8       # 挂失卡片
     MODIFY_USER_INFO = 16      # 修改用户信息
-    DELETE_USER_INFO = 32      # 删除用户信息
+    DELETE_USER = 32           # 删除用户
     VIEW_USER_INFO = 64        # 查看用户信息
     GENERATE_REPORTS = 128     # 生成财务报表
     EXPORT_REPORTS = 256       # 导出财务报表
@@ -115,9 +115,9 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)  # 创建时间
     password_hash = db.Column(db.String(128))  # 密码哈希值
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))  # 用户的身份
-    cards = db.relationship('Card', backref='user', lazy='dynamic')  # 用户的一卡通
+    cards = db.relationship('Card', backref='user', lazy='dynamic', cascade='all, delete-orphan')  # 用户的一卡通
     confirmed = db.Column(db.Boolean, default=False)  # 是否已经通过邮箱验证
-    transactions = db.relationship('Transaction', backref='user', lazy='dynamic')  # 用户的交易记录
+    transactions = db.relationship('Transaction', backref='user', lazy='dynamic', cascade='all, delete-orphan')  # 用户的交易记录
     comments = db.Column(db.Text, nullable=True, default='')  # 备注(管理员添加)
 
     def __init__(self, **kwargs):
@@ -237,7 +237,8 @@ class User(db.Model):
             json_user.update(related_json)
         if include_sensitive:
             sensitive_json = {
-                'comments': self.comments
+                'comments': self.comments,
+                'id': self.id
             }
             json_user.update(sensitive_json)
         return json_user
@@ -248,7 +249,7 @@ class Card(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     _balance = db.Column(db.Float, default=0.0)  # 卡片余额，单位为元
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    transactions = db.relationship('Transaction', backref='card', lazy='dynamic')  # 卡片的交易记录
+    transactions = db.relationship('Transaction', backref='card', lazy='dynamic', cascade='all, delete-orphan')  # 卡片的交易记录
     status = db.Column(db.String(64), default='active')  # 卡片状态，active: 正常，lost: 挂失, inactive: 失效
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)  # 创建时间
     expires_at = db.Column(db.DateTime, default=lambda: datetime.datetime.utcnow() + datetime.timedelta(days=4 * 365))
@@ -265,21 +266,25 @@ class Card(db.Model):
     def balance(self, value):
         if value >= 0:
             offset = value - self._balance
-            self._balance = value
             if offset != 0:
                 comments = '由系统做出的更改'
-                t = Transaction(user=self.user, card=self, amount=offset, comments=comments)
+                t = Transaction(user=self.user, card=self, amount=offset, comments=comments,
+                                original_balance=self._balance, current_balance=value)
                 db.session.add(t)
-                db.session.commit()
+            self._balance = value
+            db.session.add(self)
+            db.session.commit()
         else:
             raise ValueError('Balance must be non-negative.')
 
-    def recharge(self, amount, comments=''):
+    def recharge(self, amount, comments='', record=True):
         if amount > 0:
-            self.balance += amount
+            if record:
+                t = Transaction(user=self.user, card=self, amount=amount, comments=comments,
+                                original_balance=self.balance, current_balance=self.balance + amount)
+                db.session.add(t)
+            self._balance += amount
             db.session.add(self)
-            t = Transaction(user=self.user, card=self, amount=amount, comments=comments)
-            db.session.add(t)
             db.session.commit()
             return True
         return False
@@ -299,12 +304,14 @@ class Card(db.Model):
         db.session.add(self)
         return True
 
-    def consume(self, amount, comments=''):
+    def consume(self, amount, comments='', record=True):
         if 0 < amount <= self.balance:
-            self.balance -= amount
+            if record:
+                t = Transaction(user=self.user, card=self, amount=-amount, comments=comments,
+                                original_balance=self.balance, current_balance=self.balance - amount)
+                db.session.add(t)
+            self._balance -= amount
             db.session.add(self)
-            t = Transaction(user=self.user, card=self, amount=-amount, comments=comments)
-            db.session.add(t)
             db.session.commit()
             return True
         return False
@@ -359,17 +366,36 @@ class Transaction(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     card_id = db.Column(db.Integer, db.ForeignKey('cards.id'), nullable=False)
     amount = db.Column(db.Float, nullable=False)
+    original_balance = db.Column(db.Float, nullable=True)
+    current_balance = db.Column(db.Float, nullable=True)
+    canceled = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     comments = db.Column(db.Text, nullable=True, default='')
 
     def __repr__(self):
         return f'<Transaction {self.id}>'
 
+    def cancel(self):
+        offset = -self.amount
+        if offset > 0:
+            self.card.recharge(offset, record=False)
+            self.canceled = True
+            db.session.add(self)
+        else:
+            self.card.consume(-offset, record=False)
+            self.canceled = True
+            db.session.add(self)
+        db.session.commit()
+        return True
+
     def to_json(self, include_related=True, include_sensitive=False):
         json_transaction = {
             'id': self.id,
             'amount': '%.2f' % self.amount,
-            'created_at': self.created_at
+            'created_at': self.created_at,
+            'canceled': self.canceled,
+            'original_balance': '%.2f' % self.original_balance,
+            'current_balance': '%.2f' % self.current_balance
         }
         if include_related:
             related_json = {
