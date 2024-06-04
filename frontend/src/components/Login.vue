@@ -3,8 +3,8 @@
     <h2>登录</h2>
     <form @submit.prevent="loginHandler" class="login-form">
       <div class="form-group">
-        <label for="username">姓名</label>
-        <input type="text" v-model="username" required />
+        <label for="student_id">学号</label>
+        <input type="text" v-model="student_id" required />
       </div>
       <div class="form-group">
         <label for="password">密码</label>
@@ -85,7 +85,7 @@ export default {
   name: 'Login',
   data() {
     return {
-      username: '',
+      student_id: '',
       password: ''
     };
   },
@@ -94,7 +94,7 @@ export default {
     async loginHandler() {
       console.log('Login form submitted');
       try {
-        await this.login({ username: this.username, password: this.password });
+        await this.login({ student_id: this.student_id, password: this.password });
         console.log('Login successful, navigating to Dashboard');
         console.log('Router instance:', this.$router);
 

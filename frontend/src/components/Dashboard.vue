@@ -5,7 +5,7 @@
       <h2>用户信息</h2>
       <div class="info-row">
         <div class="info-label">姓名</div>
-        <div class="info-value">{{ user.username }}</div>
+        <div class="info-value">{{ user.name }}</div>
       </div>
       <div class="info-row">
         <div class="info-label">邮箱</div>
@@ -26,6 +26,19 @@
         <div v-for="(card, index) in user.cards" :key="index" class="card-row">
           <div class="card-cell">{{ card.id }}</div>
           <div class="card-cell">{{ card.balance }} ¥</div>
+        </div>
+      </div>
+                <h2>最近的交易</h2>
+      <div class="card-table">
+        <div class="card-row header">
+          <div class="card-cell">时间</div>
+          <div class="card-cell">交易金额</div>
+          <div class="card-cell">交易状态</div>
+        </div>
+        <div v-for="(transaction, index) in user.latest_transactions" :key="index" class="card-row">
+          <div class="card-cell">{{ transaction.created_at }}</div>
+          <div class="card-cell">{{ transaction.amount }} ¥</div>
+          <div class="card-cell">{{ transaction.canceled ? "已取消":"正常" }}</div>
         </div>
       </div>
     </div>

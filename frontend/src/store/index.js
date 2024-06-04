@@ -23,7 +23,7 @@ const store = createStore({
     async login({ commit }, credentials) {
       console.log('Login action called with credentials:', credentials);
       try {
-        const response = await axios.post('/api/v1/login', credentials);
+        const response = await axios.post('/api/v1/auth/login', credentials);
         console.log('Login response:', response.data);
         localStorage.setItem('token', response.data.token);
         axios.defaults.headers.common['Authorization'] = 'Basic ' + btoa(response.data.token + ':');
@@ -46,7 +46,7 @@ const store = createStore({
       if (token) {
         axios.defaults.headers.common['Authorization'] = 'Basic ' + btoa(token + ':');
         try {
-          const response = await axios.get('/api/v1/me');
+          const response = await axios.get('/api/v1/auth/me');
           commit('setUser', response.data.user);
           console.log('User set:', response.data.user);
         } catch (error) {
