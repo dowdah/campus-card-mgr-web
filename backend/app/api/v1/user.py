@@ -4,12 +4,12 @@ from ... import db
 
 
 user_bp = Blueprint('user', __name__)
-EDITABLE_ATTRS = ['name', 'student_id', 'email', 'confirmed', 'comments']  # 管理员可修改的用户属性
+EDITABLE_ATTRS = ['name', 'student_id', 'email', 'confirmed', 'comments']  # 操作人员可修改的用户属性
 
 
 @user_bp.before_request
 def before_request():
-    # 该蓝图下的请求都经 VIEW_USER_INFO 权限的检查，无需再次判断用户是否具有 VIEW_USER_INFO 权限
+    # 该蓝图下的请求都经 VIEW_USER_INFO 权限的检查，无需再次判断操作者是否具有 VIEW_USER_INFO 权限
     if not g.current_user.can(Permission.VIEW_USER_INFO):
         response_json = {
             'success': False,
