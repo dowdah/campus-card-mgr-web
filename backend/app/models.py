@@ -6,6 +6,9 @@ import datetime
 import random, string
 
 
+OUTPUT_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+
+
 class Role(db.Model):
     __tablename__ = 'roles'
     id = db.Column(db.Integer, primary_key=True)
@@ -89,13 +92,13 @@ class Role(db.Model):
 
 
 class Permission:
-    VIEW_BALANCE = 1           # 查看余额
-    VIEW_TRANSACTIONS = 2      # 查看交易记录
-    RECHARGE_CARD = 4          # 充值卡片
-    REPORT_LOST_CARD = 8       # 挂失卡片
+    VIEW_BALANCE = 1           # 查看余额(自身)
+    VIEW_TRANSACTIONS = 2      # 查看交易记录(自身)
+    RECHARGE_CARD = 4          # 充值卡片(自身)
+    REPORT_LOST_CARD = 8       # 挂失卡片(自身)
     MODIFY_USER_INFO = 16      # 修改用户信息
     DELETE_USER = 32           # 删除用户
-    VIEW_USER_INFO = 64        # 查看用户信息
+    VIEW_USER_INFO = 64        # 查看用户信息, 包括卡片和交易记录
     GENERATE_REPORTS = 128     # 生成财务报表
     EXPORT_REPORTS = 256       # 导出财务报表
     BACKUP_DATA = 512          # 数据备份
@@ -129,6 +132,10 @@ class User(db.Model):
 
     def __repr__(self):
         return '<User %s(%s)>' % (self.name, self.student_id)
+
+    @property
+    def formatted_created_at(self):
+        return self.created_at.strftime(OUTPUT_TIME_FORMAT)
 
     @property
     def password(self):
@@ -222,7 +229,7 @@ class User(db.Model):
             'name': self.name,
             'alternative_id': self.alternative_id,
             'student_id': self.student_id,
-            'created_at': self.created_at,
+            'created_at': self.formatted_created_at,
             'id': self.id,
             'email': self.email,
             'role': self.role.name,
@@ -257,6 +264,14 @@ class Card(db.Model):
 
     def __repr__(self):
         return '<Card %r>' % self.id
+
+    @property
+    def formatted_created_at(self):
+        return self.created_at.strftime(OUTPUT_TIME_FORMAT)
+
+    @property
+    def formatted_expires_at(self):
+        return self.expires_at.strftime(OUTPUT_TIME_FORMAT)
 
     @property
     def balance(self):
@@ -344,8 +359,8 @@ class Card(db.Model):
             'id': self.id,
             'balance': '%.2f' % self.balance,
             'status': self.status,
-            'created_at': self.created_at,
-            'expires_at': self.expires_at,
+            'created_at': self.formatted_created_at,
+            'expires_at': self.formatted_expires_at,
             'is_active': self.is_active(),
             'is_lost': self.is_lost(),
             'is_expired': self.is_expired()
@@ -375,6 +390,10 @@ class Transaction(db.Model):
     def __repr__(self):
         return f'<Transaction {self.id}>'
 
+    @property
+    def formatted_created_at(self):
+        return self.created_at.strftime(OUTPUT_TIME_FORMAT)
+
     def cancel(self):
         offset = -self.amount
         if offset > 0:
@@ -392,7 +411,7 @@ class Transaction(db.Model):
         json_transaction = {
             'id': self.id,
             'amount': '%.2f' % self.amount,
-            'created_at': self.created_at,
+            'created_at': self.formatted_created_at,
             'canceled': self.canceled,
             'original_balance': '%.2f' % self.original_balance,
             'current_balance': '%.2f' % self.current_balance
