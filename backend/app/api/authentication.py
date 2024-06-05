@@ -9,16 +9,16 @@ BYPASS_AUTH = ['api.v1.auth.login', 'api.v1.test']
 
 
 @auth.verify_password
-def verify_password(username_or_token, password):
+def verify_password(student_id_or_token, password):
     # 添加 g.token_used 的目的是为了让视图函数区分是使用 token 还是密码进行认证
     # 进一步防止用户绕过令牌过期机制
     g.is_anonymous = True
     g.token_used = False
     if request.endpoint in BYPASS_AUTH:
         return True
-    if username_or_token:
+    if student_id_or_token:
         if password:
-            user = User.query.filter_by(username=username_or_token).first()
+            user = User.query.filter_by(student_id=student_id_or_token).first()
             if user is None or not user.verify_password(password):
                 return False
             if not user.can(Permission.LOGIN):
@@ -28,7 +28,7 @@ def verify_password(username_or_token, password):
             return True
         else:
             g.token_used = True
-            user = User.verify_auth_token(username_or_token)
+            user = User.verify_auth_token(student_id_or_token)
             if user is None or not user.can(Permission.LOGIN):
                 return False
             g.is_anonymous = False
@@ -41,10 +41,10 @@ def verify_password(username_or_token, password):
 def unauthorized():
     response_json = {
         'success': False,
-        'code': 401,
+        'code': 400,
         'msg': 'Invalid credentials'
     }
-    return jsonify(response_json), 401
+    return jsonify(response_json), response_json['code']
 
 
 @api_bp.before_request
