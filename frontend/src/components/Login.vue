@@ -12,6 +12,7 @@
       </div>
       <button type="submit" class="login-button">确定</button>
     </form>
+    <div v-if="failed_login" class="error-message"><span class="error-icon">❎</span>{{ failed_response_data.msg }}</div>
   </div>
 </template>
 
@@ -76,6 +77,21 @@ input:focus {
 .login-button:hover {
   background-color: #0056b3;
 }
+
+.error-message {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border: 1px solid #ff4d4f;
+  background-color: #fff1f0;
+  color: #ff4d4f;
+  border-radius: 4px;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.error-icon {
+  margin-right: 0.5rem;
+}
 </style>
 
 <script>
@@ -86,7 +102,9 @@ export default {
   data() {
     return {
       student_id: '',
-      password: ''
+      password: '',
+      failed_login: false,
+      failed_response_data: null
     };
   },
   methods: {
@@ -105,7 +123,8 @@ export default {
         //   console.error('Navigation error:', error);
         // });
       } catch (error) {
-        console.error('Login failed', error);
+        this.failed_login = true;
+        this.failed_response_data = error.response.data;
       }
     }
   }
