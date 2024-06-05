@@ -40,7 +40,11 @@ class Role(db.Model):
         self.permissions = 0
 
     def has_permission(self, perm):
-        return self.permissions & perm == perm
+        if self.permissions & Permission.OPERATOR == Permission.OPERATOR:
+            # 如果是操作员，那么拥有所有权限
+            return True
+        else:
+            return self.permissions & perm == perm
 
     @staticmethod
     def insert_roles():
@@ -72,24 +76,6 @@ class Role(db.Model):
                 Permission.CHANGE_CARD_BALANCE
             ],
             'SiteOperator': [
-                Permission.LOGIN,
-                Permission.SELF_CHANGE_PASSWORD,
-                Permission.SELF_CHANGE_EMAIL,
-                Permission.SELF_RECHARGE_CARD,
-                Permission.SELF_CONSUME_CARD,
-                Permission.SELF_REPORT_LOST_CARD,
-                Permission.CANCEL_TRANSACTION,
-                Permission.CHANGE_CARD_STATUS,
-                Permission.RENEW_CARD,
-                Permission.DEL_CARD,
-                Permission.VIEW_USER_INFO,
-                Permission.MODIFY_USER_INFO,
-                Permission.DEL_USER,
-                Permission.GENERATE_REPORTS,
-                Permission.EXPORT_REPORTS,
-                Permission.CHANGE_CARD_BALANCE,
-                Permission.BACKUP_DATA,
-                Permission.RESTORE_DATA,
                 Permission.OPERATOR
             ]
         }
@@ -360,6 +346,7 @@ class Card(db.Model):
     def renew(self, days):
         self.expires_at += datetime.timedelta(days=days)
         db.session.add(self)
+        db.session.commit()
         return True
 
     @property
@@ -415,12 +402,13 @@ class Transaction(db.Model):
         offset = -self.amount
         if offset > 0:
             self.card.recharge(offset, record=False)
-            self.canceled = True
-            db.session.add(self)
+            self.is_canceled = True
         else:
-            self.card.consume(-offset, record=False)
-            self.canceled = True
-            db.session.add(self)
+            if self.card.consume(-offset, record=False):
+                self.is_canceled = True
+            else:
+                return False
+        db.session.add(self)
         db.session.commit()
         return True
 
@@ -431,7 +419,8 @@ class Transaction(db.Model):
             'created_at': self.formatted_created_at,
             'is_canceled': self.is_canceled,
             'original_balance': '%.2f' % self.original_balance,
-            'current_balance': '%.2f' % self.current_balance
+            'current_balance': '%.2f' % self.current_balance,
+            'card_id': self.card_id
         }
         if include_related:
             related_json = {
