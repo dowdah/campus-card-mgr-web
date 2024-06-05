@@ -39,13 +39,6 @@ def get_me():
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
-    """
-    code:
-    200: 登录成功
-    400: 参数错误
-    401: 用户名或密码错误
-    403: 用户无权登录
-    """
     data = g.data
     student_id = data.get('student_id')
     password = data.get('password')
@@ -57,7 +50,7 @@ def login():
                     response_json = {
                         'success': True,
                         'code': 200,
-                        'msg': 'Login successfully',
+                        'msg': '登录成功。',
                         'token': user.generate_auth_token(),
                         'expiration': current_app.config['API_TOKEN_EXPIRATION'],
                         'user': user.to_json()
@@ -66,25 +59,25 @@ def login():
                     response_json = {
                         'success': False,
                         'code': 401,
-                        'msg': 'Invalid credentials'
+                        'msg': '用户名或密码错误。'
                     }
             else:
                 response_json = {
                     'success': False,
                     'code': 403,
-                    'msg': 'User has no permission to login'
+                    'msg': '你已被禁止登录，联系管理员。'
                 }
         else:
             response_json = {
                 'success': False,
                 'code': 401,
-                'msg': 'Invalid credentials'
+                'msg': '用户名或密码错误。'
             }
     else:
         response_json = {
             'success': False,
             'code': 400,
-            'msg': 'Invalid parameters'
+            'msg': '参数错误。'
         }
     return jsonify(response_json), response_json['code']
 
