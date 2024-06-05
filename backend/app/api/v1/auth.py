@@ -1,5 +1,6 @@
 from flask import jsonify, request, g, abort, current_app, Blueprint
 from ...models import User, Permission
+from ...decorators import permission_required
 
 
 auth_bp = Blueprint('auth', __name__)
@@ -26,6 +27,7 @@ def before_request():
 
 
 @auth_bp.route('/me')
+@permission_required(Permission.LOGIN)
 def get_me():
     response_json = {
         'success': True,
@@ -42,21 +44,36 @@ def login():
     200: 登录成功
     400: 参数错误
     401: 用户名或密码错误
+    403: 用户无权登录
     """
     data = g.data
     student_id = data.get('student_id')
     password = data.get('password')
     if student_id and password:
         user = User.query.filter_by(student_id=student_id).first()
-        if user and user.verify_password(password):
-            response_json = {
-                'success': True,
-                'code': 200,
-                'msg': 'Login successfully',
-                'token': user.generate_auth_token(),
-                'expiration': current_app.config['API_TOKEN_EXPIRATION'],
-                'user': user.to_json()
-            }
+        if user:
+            if user.can(Permission.LOGIN):
+                if user.verify_password(password):
+                    response_json = {
+                        'success': True,
+                        'code': 200,
+                        'msg': 'Login successfully',
+                        'token': user.generate_auth_token(),
+                        'expiration': current_app.config['API_TOKEN_EXPIRATION'],
+                        'user': user.to_json()
+                    }
+                else:
+                    response_json = {
+                        'success': False,
+                        'code': 401,
+                        'msg': 'Invalid credentials'
+                    }
+            else:
+                response_json = {
+                    'success': False,
+                    'code': 403,
+                    'msg': 'User has no permission to login'
+                }
         else:
             response_json = {
                 'success': False,
@@ -73,6 +90,7 @@ def login():
 
 
 @auth_bp.route('/refresh')
+@permission_required(Permission.LOGIN)
 def get_token():
     if g.token_used and not ALLOW_TOKEN_REFRESH:
         response_json = {
