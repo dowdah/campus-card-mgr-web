@@ -1,21 +1,16 @@
 from flask import jsonify, request, g, abort, current_app, Blueprint
 from ...models import User, Permission, Card
 from ... import db
+from ...decorators import permission_required
 
 
 card_bp = Blueprint('card', __name__)
 
 
 @card_bp.route('/query', methods=['GET', 'POST'])
+@permission_required(Permission.VIEW_USER_INFO)
 def get_cards():
     # 查询所有符合条件的一卡通并分页返回
-    if not g.current_user.can(Permission.VIEW_USER_INFO):
-        response_json = {
-            'success': False,
-            'code': 403,
-            'msg': 'Permission denied'
-        }
-        return jsonify(response_json), response_json['code']
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     if request.method == 'GET':
@@ -61,5 +56,43 @@ def get_cards():
             'success': False,
             'code': 404,
             'msg': 'No card found'
+        }
+    return jsonify(response_json), response_json['code']
+
+
+@card_bp.route('/my')
+def get_my():
+    response_json = {
+        'success': True,
+        'code': 200,
+        'cards': [card.to_json() for card in g.current_user.cards]
+    }
+    return jsonify(response_json), response_json['code']
+
+
+@card_bp.route('/my/lost/<int:id>')
+def report_card_lost(id):
+    card = g.current_user.cards.filter_by(id=id).first()
+    if card:
+        if card.is_lost:
+            response_json = {
+                'success': False,
+                'code': 400,
+                'msg': 'Card already lost'
+            }
+        else:
+            card.is_lost = True
+            db.session.add(card)
+            db.session.commit()
+            response_json = {
+                'success': True,
+                'code': 200,
+                'msg': 'Card reported lost successfully'
+            }
+    else:
+        response_json = {
+            'success': False,
+            'code': 404,
+            'msg': 'Card not found'
         }
     return jsonify(response_json), response_json['code']
