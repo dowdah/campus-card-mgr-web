@@ -1,25 +1,15 @@
 from flask import jsonify, request, g, abort, current_app, Blueprint
 from ...models import User, Permission
 from ... import db
+from ...decorators import permission_required, operator_only
 
 
 user_bp = Blueprint('user', __name__)
 EDITABLE_ATTRS = ['name', 'student_id', 'email', 'confirmed', 'comments']  # 操作人员可修改的用户属性
 
 
-@user_bp.before_request
-def before_request():
-    # 该蓝图下的请求都经 VIEW_USER_INFO 权限的检查，无需再次判断操作者是否具有 VIEW_USER_INFO 权限
-    if not g.current_user.can(Permission.VIEW_USER_INFO):
-        response_json = {
-            'success': False,
-            'code': 403,
-            'msg': 'Permission denied'
-        }
-        return jsonify(response_json), response_json['code']
-
-
 @user_bp.route('/query', methods=['GET', 'POST'])
+@permission_required(Permission.VIEW_USER_INFO)
 def get_users():
     # 查询所有符合条件的用户并分页返回
     page = request.args.get('page', 1, type=int)
@@ -72,6 +62,7 @@ def get_users():
 
 
 @user_bp.route('/operate/<int:id>', methods=['PUT', 'DELETE'])
+@permission_required(Permission.VIEW_USER_INFO)
 def operate_user(id):
     # 对特定ID的用户进行信息修改或删除
     user = User.query.filter_by(id=id).first()
@@ -119,7 +110,7 @@ def operate_user(id):
                 'msg': 'Permission denied'
             }
     elif request.method == 'DELETE':
-        if g.current_user.can(Permission.DELETE_USER):
+        if g.current_user.can(Permission.DEL_USER):
             if user:
                 if g.current_user == user:
                     response_json = {
