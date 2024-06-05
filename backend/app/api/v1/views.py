@@ -7,8 +7,8 @@ from ...models import User, Permission
 def before_request():
     # 将 application/json 与 multipart/form-data 的数据统一处理
     # g.temp = request.content_type
-    methods_with_data = ['POST', 'PUT', 'PATCH']
-    if request.method in methods_with_data:
+    methods_with_body = ['POST', 'PUT', 'PATCH']
+    if request.method in methods_with_body:
         if request.content_type:
             if 'application/json' in request.content_type:
                 g.data = request.get_json()
