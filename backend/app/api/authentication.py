@@ -1,6 +1,6 @@
 from flask_httpauth import HTTPBasicAuth
 from flask import g, abort, request, jsonify
-from ..models import User
+from ..models import User, Permission
 from . import api_bp
 
 
@@ -19,9 +19,9 @@ def verify_password(username_or_token, password):
     if username_or_token:
         if password:
             user = User.query.filter_by(username=username_or_token).first()
-            if user is None:
+            if user is None or not user.verify_password(password):
                 return False
-            if not user.verify_password(password):
+            if not user.can(Permission.LOGIN):
                 return False
             g.current_user = user
             g.is_anonymous = False
@@ -29,7 +29,7 @@ def verify_password(username_or_token, password):
         else:
             g.token_used = True
             user = User.verify_auth_token(username_or_token)
-            if user is None:
+            if user is None or not user.can(Permission.LOGIN):
                 return False
             g.is_anonymous = False
             g.current_user = user
