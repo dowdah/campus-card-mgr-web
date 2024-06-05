@@ -37,7 +37,7 @@ class Role(db.Model):
             self.permissions -= perm
 
     def reset_permissions(self):
-        self. permissions = 0
+        self.permissions = 0
 
     def has_permission(self, perm):
         return self.permissions & perm == perm
@@ -46,35 +46,50 @@ class Role(db.Model):
     def insert_roles():
         roles = {
             'User': [
-                Permission.VIEW_BALANCE,
-                Permission.VIEW_TRANSACTIONS,
-                Permission.RECHARGE_CARD,
-                Permission.REPORT_LOST_CARD
+                Permission.LOGIN,
+                Permission.SELF_CHANGE_PASSWORD,
+                Permission.SELF_CHANGE_EMAIL,
+                Permission.SELF_RECHARGE_CARD,
+                Permission.SELF_CONSUME_CARD,
+                Permission.SELF_REPORT_LOST_CARD
             ],
             'SchoolStaff': [
-                Permission.VIEW_BALANCE,
-                Permission.VIEW_TRANSACTIONS,
-                Permission.RECHARGE_CARD,
-                Permission.REPORT_LOST_CARD,
-                Permission.MODIFY_USER_INFO,
+                Permission.LOGIN,
+                Permission.SELF_CHANGE_PASSWORD,
+                Permission.SELF_CHANGE_EMAIL,
+                Permission.SELF_RECHARGE_CARD,
+                Permission.SELF_CONSUME_CARD,
+                Permission.SELF_REPORT_LOST_CARD,
+                Permission.CANCEL_TRANSACTION,
+                Permission.CHANGE_CARD_STATUS,
+                Permission.RENEW_CARD,
+                Permission.DEL_CARD,
                 Permission.VIEW_USER_INFO,
-                Permission.GENERATE_REPORTS,
-                Permission.EXPORT_REPORTS
-            ],
-            'SiteOperator': [
-                Permission.VIEW_BALANCE,
-                Permission.VIEW_TRANSACTIONS,
-                Permission.RECHARGE_CARD,
-                Permission.REPORT_LOST_CARD,
                 Permission.MODIFY_USER_INFO,
-                Permission.DELETE_USER,
-                Permission.VIEW_USER_INFO,
+                Permission.DEL_USER,
                 Permission.GENERATE_REPORTS,
                 Permission.EXPORT_REPORTS,
+                Permission.CHANGE_CARD_BALANCE
+            ],
+            'SiteOperator': [
+                Permission.LOGIN,
+                Permission.SELF_CHANGE_PASSWORD,
+                Permission.SELF_CHANGE_EMAIL,
+                Permission.SELF_RECHARGE_CARD,
+                Permission.SELF_CONSUME_CARD,
+                Permission.SELF_REPORT_LOST_CARD,
+                Permission.CANCEL_TRANSACTION,
+                Permission.CHANGE_CARD_STATUS,
+                Permission.RENEW_CARD,
+                Permission.DEL_CARD,
+                Permission.VIEW_USER_INFO,
+                Permission.MODIFY_USER_INFO,
+                Permission.DEL_USER,
+                Permission.GENERATE_REPORTS,
+                Permission.EXPORT_REPORTS,
+                Permission.CHANGE_CARD_BALANCE,
                 Permission.BACKUP_DATA,
                 Permission.RESTORE_DATA,
-                Permission.VIEW_SYSTEM_LOGS,
-                Permission.MANAGE_PERMISSIONS,
                 Permission.OPERATOR
             ]
         }
@@ -92,20 +107,26 @@ class Role(db.Model):
 
 
 class Permission:
-    VIEW_BALANCE = 1           # 查看余额(自身)
-    VIEW_TRANSACTIONS = 2      # 查看交易记录(自身)
-    RECHARGE_CARD = 4          # 充值卡片(自身)
-    REPORT_LOST_CARD = 8       # 挂失卡片(自身)
-    MODIFY_USER_INFO = 16      # 修改用户信息
-    DELETE_USER = 32           # 删除用户
-    VIEW_USER_INFO = 64        # 查看用户信息, 包括卡片和交易记录
-    GENERATE_REPORTS = 128     # 生成财务报表
-    EXPORT_REPORTS = 256       # 导出财务报表
-    BACKUP_DATA = 512          # 数据备份
-    RESTORE_DATA = 1024        # 数据恢复
-    VIEW_SYSTEM_LOGS = 2048    # 查看系统日志
-    MANAGE_PERMISSIONS = 4096  # 权限管理
-    OPERATOR = 8192            # 后台操作员
+    LOGIN = 1  # 登录权限
+    SELF_CHANGE_PASSWORD = 2  # 自己修改密码
+    SELF_CHANGE_EMAIL = 4  # 自己修改邮箱
+    SELF_RECHARGE_CARD = 8  # 自己充值卡
+    SELF_CONSUME_CARD = 16  # 自己消费卡
+    SELF_REPORT_LOST_CARD = 32  # 自己挂失卡
+    CANCEL_TRANSACTION = 64  # 撤销交易
+    CHANGE_CARD_STATUS = 128  # 更改卡状态
+    RENEW_CARD = 256  # 续卡
+    DEL_CARD = 512  # 删除卡
+    VIEW_USER_INFO = 1024  # 查看用户信息
+    MODIFY_USER_INFO = 2048  # 修改用户信息
+    DEL_USER = 4096  # 删除用户
+    GENERATE_REPORTS = 8192  # 生成报告
+    EXPORT_REPORTS = 16384  # 导出报告
+    MANAGE_PERMISSIONS = 32768  # 调整角色权限
+    BACKUP_DATA = 65536  # 备份数据
+    RESTORE_DATA = 131072  # 恢复数据
+    CHANGE_CARD_BALANCE = 262144  # 更改卡余额
+    OPERATOR = 524288  # 操作员权限
 
 
 class User(db.Model):
@@ -257,7 +278,8 @@ class Card(db.Model):
     _balance = db.Column(db.Float, default=0.0)  # 卡片余额，单位为元
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     transactions = db.relationship('Transaction', backref='card', lazy='dynamic', cascade='all, delete-orphan')  # 卡片的交易记录
-    status = db.Column(db.String(64), default='active')  # 卡片状态，active: 正常，lost: 挂失, inactive: 失效
+    is_banned = db.Column(db.Boolean, default=False)  # 是否被禁用
+    is_lost = db.Column(db.Boolean, default=False)  # 是否被挂失
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)  # 创建时间
     expires_at = db.Column(db.DateTime, default=lambda: datetime.datetime.utcnow() + datetime.timedelta(days=4 * 365))
     # 卡片有效期，默认为4年
@@ -304,21 +326,6 @@ class Card(db.Model):
             return True
         return False
 
-    def report_lost(self):
-        self.status = 'lost'
-        db.session.add(self)
-        return True
-
-    def deactivate(self):
-        self.status = 'inactive'
-        db.session.add(self)
-        return True
-
-    def activate(self):
-        self.status = 'active'
-        db.session.add(self)
-        return True
-
     def consume(self, amount, comments='', record=True):
         if 0 < amount <= self.balance:
             if record:
@@ -331,14 +338,24 @@ class Card(db.Model):
             return True
         return False
 
+    @property
     def is_active(self):
-        return self.status == 'active'
+        return not (self.is_banned or self.is_expired or self.is_lost)
 
-    def is_lost(self):
-        return self.status == 'lost'
-
+    @property
     def is_expired(self):
         return self.expires_at < datetime.datetime.utcnow()
+
+    @property
+    def status(self):
+        status_list = []
+        if self.is_banned:
+            status_list.append('禁用')
+        if self.is_lost:
+            status_list.append('已挂失')
+        if self.is_expired:
+            status_list.append('过期')
+        return ','.join(status_list) if status_list else '正常'
 
     def renew(self, days):
         self.expires_at += datetime.timedelta(days=days)
@@ -361,9 +378,9 @@ class Card(db.Model):
             'status': self.status,
             'created_at': self.formatted_created_at,
             'expires_at': self.formatted_expires_at,
-            'is_active': self.is_active(),
-            'is_lost': self.is_lost(),
-            'is_expired': self.is_expired()
+            'is_active': self.is_active,
+            'is_lost': self.is_lost,
+            'is_expired': self.is_expired
         }
         if include_related:
             related_json = {
@@ -383,7 +400,7 @@ class Transaction(db.Model):
     amount = db.Column(db.Float, nullable=False)
     original_balance = db.Column(db.Float, nullable=True)
     current_balance = db.Column(db.Float, nullable=True)
-    canceled = db.Column(db.Boolean, default=False)
+    is_canceled = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     comments = db.Column(db.Text, nullable=True, default='')
 
@@ -412,7 +429,7 @@ class Transaction(db.Model):
             'id': self.id,
             'amount': '%.2f' % self.amount,
             'created_at': self.formatted_created_at,
-            'canceled': self.canceled,
+            'is_canceled': self.is_canceled,
             'original_balance': '%.2f' % self.original_balance,
             'current_balance': '%.2f' % self.current_balance
         }
