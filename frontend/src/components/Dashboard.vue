@@ -3,42 +3,44 @@
     <template v-if="user">
     <div class="user-info">
       <h2>用户信息</h2>
-      <div class="info-row">
+      <div class="userinfo-row">
         <div class="info-label">姓名</div>
         <div class="info-value">{{ user.name }}</div>
       </div>
-      <div class="info-row">
+      <div class="userinfo-row">
         <div class="info-label">邮箱</div>
         <div class="info-value">{{ user.email }}</div>
       </div>
-      <div class="info-row">
+      <div class="userinfo-row">
         <div class="info-label">身份</div>
         <div class="info-value">{{ user.role }}</div>
       </div>
     </div>
         <div class="card-info">
       <h2>拥有的一卡通</h2>
-      <div class="card-table">
-        <div class="card-row header">
-          <div class="card-cell">卡号</div>
-          <div class="card-cell">余额</div>
+      <div class="info-table">
+        <div class="info-row header">
+          <div class="info-cell">卡号</div>
+          <div class="info-cell">余额</div>
+          <div class="info-cell">状态</div>
         </div>
-        <div v-for="(card, index) in user.cards" :key="index" class="card-row">
-          <div class="card-cell">{{ card.id }}</div>
-          <div class="card-cell">{{ card.balance }} ¥</div>
+        <div v-for="(card, index) in user.cards" :key="index" class="info-row">
+          <div class="info-cell">{{ card.id }}</div>
+          <div class="info-cell">{{ card.balance }} ¥</div>
+          <div class="info-cell">{{ card.status }}</div>
         </div>
       </div>
                 <h2>最近的交易</h2>
-      <div class="card-table">
-        <div class="card-row header">
-          <div class="card-cell">时间</div>
-          <div class="card-cell">交易金额</div>
-          <div class="card-cell">交易状态</div>
+      <div class="info-table">
+        <div class="info-row header">
+          <div class="info-cell">时间</div>
+          <div class="info-cell">交易金额</div>
+          <div class="info-cell">交易状态</div>
         </div>
-        <div v-for="(transaction, index) in user.latest_transactions" :key="index" class="card-row">
-          <div class="card-cell">{{ transaction.created_at }}</div>
-          <div class="card-cell">{{ transaction.amount }} ¥</div>
-          <div class="card-cell">{{ transaction.canceled ? "已取消":"正常" }}</div>
+        <div v-for="(transaction, index) in user.latest_transactions" :key="index" class="info-row">
+          <div class="info-cell">{{ transaction.created_at }}</div>
+          <div class="info-cell">{{ transaction.amount }} ¥</div>
+          <div class="info-cell">{{ transaction.canceled ? "已取消":"正常" }}</div>
         </div>
       </div>
     </div>
@@ -80,7 +82,7 @@ h2 {
   gap: 10px;
 }
 
-.info-row {
+.userinfo-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -99,17 +101,17 @@ h2 {
   text-align: right;
 }
 
-.card-table {
+.info-table {
   display: table;
   width: 100%;
   border-collapse: collapse;
 }
 
-.card-row {
+.info-row {
   display: table-row;
 }
 
-.card-cell {
+.info-cell {
   display: table-cell;
   padding: 10px;
   border: 1px solid #e9ecef;
