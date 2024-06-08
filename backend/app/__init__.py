@@ -27,6 +27,11 @@ def create_app(config_name):
     from .api import api_bp
     app.register_blueprint(api_bp, url_prefix='/api')
 
+    with app.app_context():
+        # 导入模型和事件监听器
+        from . import models
+        from . import listeners
+
     @app.context_processor
     def inject_variables():
         return {'site_name': app.config['SITE_NAME']}
