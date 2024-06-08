@@ -1,4 +1,3 @@
-from . import db
 from sqlalchemy import event
 from sqlalchemy.orm import Session
 from .models import User, Role, FinancialReport
