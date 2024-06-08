@@ -1,10 +1,15 @@
-from . import db
-from werkzeug.security import generate_password_hash, check_password_hash
+import datetime
+import random
+import string
+import json
+import io
+import pandas as pd
+
 from flask import current_app
 from itsdangerous.url_safe import URLSafeTimedSerializer as Serializer
-import datetime
-import random, string
+from werkzeug.security import generate_password_hash, check_password_hash
 
+from . import db
 
 OUTPUT_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
@@ -127,8 +132,11 @@ class User(db.Model):
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))  # 用户的身份
     cards = db.relationship('Card', backref='user', lazy='dynamic', cascade='all, delete-orphan')  # 用户的一卡通
     confirmed = db.Column(db.Boolean, default=False)  # 是否已经通过邮箱验证
-    transactions = db.relationship('Transaction', backref='user', lazy='dynamic', cascade='all, delete-orphan')  # 用户的交易记录
+    transactions = db.relationship('Transaction', backref='user', lazy='dynamic', cascade='all, delete-orphan')
+    # 用户的交易记录
     comments = db.Column(db.Text, nullable=True, default='')  # 备注(管理员添加)
+    financial_reports = db.relationship('FinancialReport', backref='user', lazy='dynamic', cascade='all, delete-orphan')
+    # 管理员的财务报告
 
     def __repr__(self):
         return '<User %s(%s)>' % (self.name, self.student_id)
@@ -249,6 +257,16 @@ class User(db.Model):
             }
             json_user.update(sensitive_json)
         return json_user
+
+    def create_financial_report(self, comments=''):
+        if self.can(Permission.GENERATE_REPORTS):
+            report = FinancialReport(user=self, comments=comments)
+            report.generate_report_data()
+            db.session.add(report)
+            db.session.commit()
+            return report
+        else:
+            return None
 
 
 class Card(db.Model):
@@ -432,9 +450,105 @@ class Transaction(db.Model):
 class FinancialReport(db.Model):
     __tablename__ = 'financial_reports'
     id = db.Column(db.Integer, primary_key=True)
-    report_data = db.Column(db.Text, nullable=False)
+    json_data = db.Column(db.Text, nullable=False)
+    xlsx_data = db.Column(db.LargeBinary, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    xlsx_expiration = db.Column(db.Interval, nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    total_income = db.Column(db.Float, nullable=False, default=0.0)
+    total_expenses = db.Column(db.Float, nullable=False, default=0.0)
+    net_growth = db.Column(db.Float, nullable=False, default=0.0)
     comments = db.Column(db.Text, nullable=True, default='')
 
     def __repr__(self):
         return f'<FinancialReport {self.id}>'
+
+    @property
+    def formatted_created_at(self):
+        return self.created_at.strftime(OUTPUT_TIME_FORMAT)
+
+    @property
+    def is_xlsx_expired(self):
+        return self.expiration is not None and self.created_at + self.xlsx_expiration < datetime.datetime.utcnow()
+
+    @property
+    def file_name(self):
+        current_time = datetime.now().strftime('%Y%m%d_%H%M%S')
+        return f'财务报表_{current_time}.xlsx'
+
+    def to_json(self):
+        # json_data 和 xlsx_data 字段往往过于庞大，因此不在这里返回，需要单独获取
+        return {
+            'id': self.id,
+            'report_type': self.report_type,
+            'created_at': self.formatted_created_at,
+            'generated_by': self.generated_by,
+            'total_income': f'{self.total_income:.2f}',
+            'total_expenses': f'{self.total_expenses:.2f}',
+            'net_profit': f'{self.net_profit:.2f}',
+            'comments': self.comments
+        }
+
+    def generate_report_data(self):
+        # 从Transactions表中提取数据
+        transactions = Transaction.query.all()
+        total_income = sum(t.amount for t in transactions if t.amount > 0 and not t.is_canceled)
+        total_expenses = sum(-t.amount for t in transactions if t.amount < 0 and not t.is_canceled)
+        net_growth = total_income - total_expenses
+        # 生成结构化的report_data
+        transactions_data = [
+            {
+                'id': t.id,
+                'amount': t.amount,
+                'created_at': t.created_at.strftime(OUTPUT_TIME_FORMAT),
+                'status': '已撤销' if t.is_canceled else '正常',
+                'original_balance': t.original_balance,
+                'current_balance': t.current_balance,
+                'comments': t.comments,
+                'student_id': t.user.student_id
+            }
+            for t in transactions
+        ]
+
+        report_data = {
+            'total_income': total_income,
+            'total_expenses': total_expenses,
+            'net_growth': net_growth,
+            'transactions': transactions_data
+        }
+
+        # 将report_data转换为JSON格式并存储在数据库中
+        self.json_data = json.dumps(report_data, ensure_ascii=False)
+        self.total_income = total_income
+        self.total_expenses = total_expenses
+        self.net_growth = net_growth
+
+    def generate_xlsx_data(self):
+        # 从json_data中提取数据
+        report_data = json.loads(self.json_data)
+        transactions_data = report_data['transactions']
+        df = pd.DataFrame(transactions_data)
+        # 生成xlsx_data
+        df_transactions = pd.DataFrame(transactions_data)
+        df_transactions.rename(columns={
+            'id': '交易ID',
+            'amount': '金额',
+            'created_at': '交易时间',
+            'status': '状态',
+            'original_balance': '卡片原余额',
+            'current_balance': '卡片交易后余额',
+            'comments': '备注',
+            'student_id': '学生ID'
+        }, inplace=True)
+        summary_data = {
+            '总收入': [report_data['total_income']],
+            '总支出': [report_data['total_expenses']],
+            '净增长': [report_data['net_growth']]
+        }
+        df_summary = pd.DataFrame(summary_data)
+        buffer = io.BytesIO()
+        with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+            df_transactions.to_excel(writer, sheet_name='交易', index=False)
+            df_summary.to_excel(writer, sheet_name='总览', index=False)
+        buffer.seek(0)
+        self.xlsx_data = buffer.read()
