@@ -4,5 +4,5 @@ from ... import db
 from ...decorators import permission_required
 
 
-fr_bp = Blueprint('financialreport', __name__)
+fr_bp = Blueprint('financial_report', __name__)
 
