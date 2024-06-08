@@ -466,7 +466,7 @@ class FinancialReport(db.Model):
 
     @property
     def is_xlsx_expired(self):
-        return self.expiration is not None and self.created_at + self.xlsx_expiration < datetime.datetime.utcnow()
+        return self.xlsx_expiration is not None and self.created_at + self.xlsx_expiration < datetime.datetime.utcnow()
 
     @property
     def file_name(self):
