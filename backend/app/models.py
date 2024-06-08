@@ -450,7 +450,7 @@ class FinancialReport(db.Model):
     json_data = db.Column(db.Text, nullable=False)
     xlsx_data = db.Column(db.LargeBinary, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
-    xlsx_expiration = db.Column(db.Interval, nullable=True)
+    xlsx_expiration = db.Column(db.Interval, nullable=True, default=datetime.timedelta(days=7))
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     total_income = db.Column(db.Float, nullable=False, default=0.0)
     total_expenses = db.Column(db.Float, nullable=False, default=0.0)
