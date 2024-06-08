@@ -261,9 +261,6 @@ class User(db.Model):
     def create_financial_report(self, comments=''):
         if self.can(Permission.GENERATE_REPORTS):
             report = FinancialReport(user=self, comments=comments)
-            report.generate_report_data()
-            db.session.add(report)
-            db.session.commit()
             return report
         else:
             return None
@@ -366,7 +363,7 @@ class Card(db.Model):
 
     @property
     def latest_transaction_list(self):
-        # 因为动张记录可能会很多，所以只返回最新的5条
+        # 因为动账记录可能会很多，所以只返回最新的5条
         return self.transactions.order_by(Transaction.created_at.desc()).limit(5).all()
 
     def to_json(self, include_related=True):
@@ -473,7 +470,7 @@ class FinancialReport(db.Model):
 
     @property
     def file_name(self):
-        current_time = datetime.now().strftime('%Y%m%d_%H%M%S')
+        current_time = datetime.datetime.utcnow().strftime('%Y%m%d_%H%M%S')
         return f'财务报表_{current_time}.xlsx'
 
     def to_json(self):
