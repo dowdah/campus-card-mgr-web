@@ -1,5 +1,6 @@
 from celery import Celery
 
+
 def make_celery(app=None):
     celery = Celery(
         app.import_name if app else 'celery_app',
@@ -20,7 +21,9 @@ def make_celery(app=None):
         celery.conf.update(app.config)
     return celery
 
+
 celery = make_celery()
+
 
 @celery.task(name='app.reverse')
 def reverse(string):
