@@ -1,5 +1,4 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from config import config
 from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
@@ -24,6 +23,9 @@ def create_app(config_name):
     config[config_name].init_app(app)
     mail.init_app(app)
     db.init_app(app)
+    from celery_app import celery
+    celery.conf.update(app.config)
+    app.celery = celery
     from .api import api_bp
     app.register_blueprint(api_bp, url_prefix='/api')
 

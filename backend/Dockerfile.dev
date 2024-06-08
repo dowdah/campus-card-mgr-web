@@ -9,3 +9,5 @@ RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 RUN pip install --no-cache-dir -r requirements/dev.txt
 
 COPY . .
+
+CMD flask run --host=0.0.0.0 --port=5000 --reload & celery -A celery_app.celery worker --loglevel=info --autoscale=10,2

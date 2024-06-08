@@ -24,6 +24,8 @@ class Config:
     MAIL_SUBJECT_PREFIX = '[一卡通信息管理系统]'
     API_TOKEN_EXPIRATION = os.environ.get('TOKEN_EXPIRATION', 3600)  # API token 过期时间, 默认为 1 小时
     EMAIL_TOKEN_EXPIRATION = os.environ.get('EMAIL_TOKEN_EXPIRATION', 3600)  # 邮件 token 过期时间, 默认为 1 小时
+    CELERY_BROKER_URL = 'redis://redis:6379/0'
+    CELERY_RESULT_BACKEND = 'redis://redis:6379/0'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     @staticmethod
