@@ -477,12 +477,12 @@ class FinancialReport(db.Model):
         # json_data 和 xlsx_data 字段往往过于庞大，因此不在这里返回，需要单独获取
         return {
             'id': self.id,
-            'report_type': self.report_type,
             'created_at': self.formatted_created_at,
-            'generated_by': self.generated_by,
+            'user': self.user.to_json(include_related=False),
             'total_income': f'{self.total_income:.2f}',
             'total_expenses': f'{self.total_expenses:.2f}',
-            'net_profit': f'{self.net_profit:.2f}',
+            'net_growth': f'{self.net_growth:.2f}',
+            'is_xlsx_expired': self.is_xlsx_expired,
             'comments': self.comments
         }
 
