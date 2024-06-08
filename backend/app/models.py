@@ -130,13 +130,6 @@ class User(db.Model):
     transactions = db.relationship('Transaction', backref='user', lazy='dynamic', cascade='all, delete-orphan')  # 用户的交易记录
     comments = db.Column(db.Text, nullable=True, default='')  # 备注(管理员添加)
 
-    def __init__(self, **kwargs):
-        super(User, self).__init__(**kwargs)
-        if self.role is None:
-            self.role = Role.query.filter_by(default=True).first()
-        if self.alternative_id is None:
-            self.alternative_id = User.generate_alternative_id()
-
     def __repr__(self):
         return '<User %s(%s)>' % (self.name, self.student_id)
 
