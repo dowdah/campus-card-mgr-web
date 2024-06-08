@@ -489,7 +489,7 @@ class FinancialReport(db.Model):
             'comments': self.comments
         }
 
-    def generate_report_data(self):
+    def generate_json_data(self):
         # 从Transactions表中提取数据
         transactions = Transaction.query.all()
         total_income = sum(t.amount for t in transactions if t.amount > 0 and not t.is_canceled)
