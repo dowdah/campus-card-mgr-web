@@ -1,7 +1,8 @@
-from flask import jsonify, request, g, abort, current_app, Blueprint
+from flask import jsonify, request, g, abort, current_app, Blueprint, send_file
 from ...models import User, Permission, Card, Transaction, FinancialReport
 from ... import db
 from ...decorators import permission_required
+import io
 
 
 fr_bp = Blueprint('financial_report', __name__)
@@ -58,4 +59,38 @@ def get_reports():
             'code': 404,
             'msg': 'No report found'
         }
+    return jsonify(response_json), response_json['code']
+
+
+@fr_bp.route('/generate')
+@permission_required(Permission.GENERATE_REPORTS)
+def generate_report():
+    report = g.current_user.create_financial_report()
+    db.session.add(report)
+    db.session.commit()
+    task = current_app.celery.send_task('app.fr_init_async', args=[report.id])
+    response_json = {'success': True, 'code': 200, 'task_id': task.id}
+    return jsonify(response_json), response_json['code']
+
+
+@fr_bp.route('/dl/<int:report_id>')
+@permission_required(Permission.EXPORT_REPORTS)
+def download_report(report_id):
+    report = FinancialReport.query.get_or_404(report_id)
+    file_data = io.BytesIO(report.xlsx_data)
+    return send_file(
+        file_data,
+        as_attachment=True,
+        download_name=report.file_name,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+
+
+@fr_bp.route('/rm/<int:report_id>', methods=['DELETE'])
+@permission_required(Permission.GENERATE_REPORTS)
+def remove_report(report_id):
+    report = FinancialReport.query.get_or_404(report_id)
+    db.session.delete(report)
+    db.session.commit()
+    response_json = {'success': True, 'code': 200}
     return jsonify(response_json), response_json['code']
