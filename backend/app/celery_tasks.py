@@ -1,6 +1,8 @@
-from flask import current_app
+from flask import current_app, render_template
 from app import db
 from app.models import FinancialReport
+from flask_mail import Message
+from . import mail
 
 
 celery = current_app.celery
@@ -25,3 +27,14 @@ def fr_init_async(self, fr_id):
         db.session.delete(FinancialReport.query.get(fr_id))
         db.session.commit()
         return False
+
+
+@celery.task(name='app.send_email', bind=True)
+def send_email(self, recipients, subject, template, **kwargs):
+    msg = Message(current_app.config['MAIL_SUBJECT_PREFIX'] + ' ' + subject,
+                  sender=current_app.config['MAIL_SENDER'], recipients=recipients)
+    msg.html = render_template(template, **kwargs)
+    try:
+        mail.send(msg)
+    except Exception as e:
+        self.retry(exc=e)
