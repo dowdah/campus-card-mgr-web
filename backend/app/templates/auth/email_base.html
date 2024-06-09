@@ -5,73 +5,20 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <title>{% block title %}{% endblock %}</title>
   </head>
-  <body style="        margin: 0 auto;
-        padding: 0;
-        font-family: Microsoft Yahei, Tahoma, Arial;
-        color: #333333;
-        background-color: #fff;">
-  <style type="text/css">
-    body {
-        margin: 0 auto;
-        padding: 0;
-        font-family: Microsoft Yahei, Tahoma, Arial;
-        color: #333333;
-        background-color: #fff;
-    }
-    #main {
-        width: 500px;
-        margin: auto;
-    }
-    #header_img{
-        width: 90px;
-        height: fit-content;
-    }
-    #header{
-        background-color: orange;
-        padding: 10px;
-    }
-    nav {
-            display: inline-block;
-    font-size: 18px;
-        color: white;
-        float: right;
-    }
-    nav a {
-        margin-right: 10px;
-        text-decoration: none;
-        color: white;
-    }
-    #content{
-        padding: 0 6px 0 6px;
-    }
-</style>
-  <div id="main" style="        width: 500px;
-        margin: auto;">
-  <div id="header" style="        background-color: orange;
-        padding: 10px;">
-      <a href="{{ url_for("main.index", _external=True) }}">
-  <img src="{{ url_for('static',filename='email_header.png',_external=True) }}" id="header_img" style="        width: 200px;
-        height: fit-content;"></a>
-      <nav style="            display: inline-block;
-    font-size: 18px;
-        color: white;
-        float: right;">
-          <a href="{{ url_for("main.index", _external=True) }}" style="        margin-right: 10px;
-        text-decoration: none;
-        color: white;">Index</a>|
-          <a href="https://storage.dowdah.com/" style="        margin-right: 10px;
-        text-decoration: none;
-        color: white;">Webdisk</a>
-      </nav>
+  <body style="margin: 0; padding: 0; font-family: 'Microsoft Yahei', Tahoma, Arial; color: #333333; background-color: #ffffff;">
+    <div id="main" style="width: 500px; margin: 20px auto; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); border-radius: 8px; overflow: hidden;">
+      <div id="header" style="background-color: #ff7f00; padding: 20px; text-align: center;">
+        <p style="margin: 0; font-size: 24px; color: white;">{{ site_name }}</p>
+      </div>
+      <div id="content" style="padding: 20px;">
+        {% block content %}
+        {% endblock %}
+      </div>
+      <div id="foot" style="background-color: #f9f9f9; padding: 10px; text-align: center; border-top: 1px solid #eaeaea;">
+        <hr style="border: none; border-top: 1px solid #eaeaea; margin: 10px 0;">
+        <p style="margin: 0; font-size: 14px; color: #888888;">这篇邮件为系统自动发送，请不要回复这封邮件。</p>
+        <p style="margin: 0; font-size: 14px; color: #888888;">&copy; {{ current_year }} {{ site_name }}</p>
+      </div>
     </div>
-  <div id="content" style="padding: 0 6px 0 6px;">
-    {% block content %}{% endblock %}
-  </div>
-  <div id="foot">
-    <hr>
-      <p>This email is sent via a non-reply-to-mail box. Please do not reply to this email.</p>
-    <p style="text-align: center;">&copy; {{ current_year }} {{ site_name }}</p>
-  </div>
-  </div>
   </body>
 </html>
