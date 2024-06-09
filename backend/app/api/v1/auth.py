@@ -29,6 +29,13 @@ def before_request():
 @auth_bp.route('/me')
 @permission_required(Permission.LOGIN)
 def get_me():
+    if not g.current_user.confirmed:
+        response_json = {
+            'success': False,
+            'code': 403,
+            'msg': '你的邮箱未确认，确认邮箱后才能登陆。'
+        }
+        return jsonify(response_json), response_json['code']
     response_json = {
         'success': True,
         'code': 200,
@@ -45,7 +52,7 @@ def login():
     if student_id and password:
         user = User.query.filter_by(student_id=student_id).first()
         if user:
-            if user.can(Permission.LOGIN):
+            if user.can(Permission.LOGIN) and user.confirmed:
                 if user.verify_password(password):
                     response_json = {
                         'success': True,
@@ -65,7 +72,7 @@ def login():
                 response_json = {
                     'success': False,
                     'code': 403,
-                    'msg': '你已被禁止登录，联系管理员。'
+                    'msg': '你的邮箱未确认，确认邮箱后才能登陆。' if not user.confirmed else '你无权登录，联系管理员。'
                 }
         else:
             response_json = {
