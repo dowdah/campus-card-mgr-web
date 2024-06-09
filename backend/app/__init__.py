@@ -3,6 +3,7 @@ from config import config
 from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
 from celery import Celery
+import datetime
 
 db = SQLAlchemy()
 mail = Mail()
@@ -58,6 +59,7 @@ def create_app(config_name):
 
     @app.context_processor
     def inject_variables():
-        return {'site_name': app.config['SITE_NAME']}
+        return {'site_name': app.config['SITE_NAME'], 'current_year': datetime.datetime.now().year,
+                'domain': app.config['DOMAIN']}
 
     return app
