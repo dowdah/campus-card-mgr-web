@@ -41,43 +41,47 @@ def get_me():
 def login():
     data = g.data
     student_id = data.get('student_id')
+    email = data.get('email')
     password = data.get('password')
-    if student_id and password:
-        user = User.query.filter_by(student_id=student_id).first()
-        if user:
-            if user.can(Permission.LOGIN):
-                if user.verify_password(password):
-                    response_json = {
-                        'success': True,
-                        'code': 200,
-                        'msg': '登录成功。',
-                        'token': user.generate_auth_token(),
-                        'expiration': current_app.config['API_TOKEN_EXPIRATION'],
-                        'user': user.to_json()
-                    }
-                else:
-                    response_json = {
-                        'success': False,
-                        'code': 401,
-                        'msg': '用户名或密码错误。'
-                    }
-            else:
-                response_json = {
-                    'success': False,
-                    'code': 403,
-                    'msg': '你无权登录，联系管理员。'
-                }
-        else:
-            response_json = {
-                'success': False,
-                'code': 401,
-                'msg': '用户名或密码错误。'
-            }
+    user, user_1, user_2 = None, None, None
+    if student_id:
+        user_1 = User.query.filter_by(student_id=student_id).first()
+    if email:
+        user_2 = User.query.filter_by(email=email).first()
+    if user_1 and user_2:
+        return abort(400)
+    elif user_1:
+        user = user_1
+    elif user_2:
+        user = user_2
     else:
         response_json = {
             'success': False,
             'code': 400,
-            'msg': '参数错误。'
+            'msg': '凭据错误，核查你输入的信息是否正确。'
+        }
+        return jsonify(response_json), response_json['code']
+    if user.can(Permission.LOGIN):
+        if user.verify_password(password):
+            response_json = {
+                'success': True,
+                'code': 200,
+                'msg': '登录成功。',
+                'token': user.generate_auth_token(),
+                'expiration': current_app.config['API_TOKEN_EXPIRATION'],
+                'user': user.to_json()
+            }
+        else:
+            response_json = {
+                'success': False,
+                'code': 401,
+                'msg': '凭据错误。'
+            }
+    else:
+        response_json = {
+            'success': False,
+            'code': 403,
+            'msg': '你被禁止登录，联系管理员。'
         }
     return jsonify(response_json), response_json['code']
 
