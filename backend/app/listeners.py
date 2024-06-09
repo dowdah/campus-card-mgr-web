@@ -14,11 +14,5 @@ def user_before_flush(session, flush_context, instances):
             instance.role = Role.query.filter_by(default=True).first()
 
 
-def financial_report_before_insert(mapper, connection, target):
-    if target.json_data is None:
-        target.generate_json_data()
-
-
 event.listen(User, 'before_insert', user_before_insert)
 event.listen(Session, 'before_flush', user_before_flush)
-event.listen(FinancialReport, 'before_insert', financial_report_before_insert)
