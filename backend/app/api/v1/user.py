@@ -170,6 +170,7 @@ def new_user():
         response_json = {
             'success': True,
             'code': 200,
-            'msg': 'User created successfully'
+            'msg': 'User created successfully',
+            'user': user.to_json(include_sensitive=True)
         }
     return jsonify(response_json), response_json['code']
