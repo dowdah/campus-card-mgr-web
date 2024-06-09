@@ -111,8 +111,8 @@ class Permission:
     VIEW_USER_INFO = 1024  # 查看用户信息
     MODIFY_USER_INFO = 2048  # 修改用户信息
     DEL_USER = 4096  # 删除用户
-    GENERATE_REPORTS = 8192  # 生成报告
-    EXPORT_REPORTS = 16384  # 导出报告
+    GENERATE_REPORTS = 8192  # 生成报告或删除报告
+    EXPORT_REPORTS = 16384  # 下载报告
     MANAGE_PERMISSIONS = 32768  # 调整角色权限
     BACKUP_DATA = 65536  # 备份数据
     RESTORE_DATA = 131072  # 恢复数据
@@ -447,15 +447,15 @@ class Transaction(db.Model):
 class FinancialReport(db.Model):
     __tablename__ = 'financial_reports'
     id = db.Column(db.Integer, primary_key=True)
-    json_data = db.Column(db.Text, nullable=False)
+    json_data = db.Column(db.Text, nullable=True)
     xlsx_data = db.Column(db.LargeBinary, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow, index=True, nullable=False)
     xlsx_expiration = db.Column(db.Interval, nullable=True, default=datetime.timedelta(days=7))
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    total_income = db.Column(db.Float, nullable=False, default=0.0)
-    total_expenses = db.Column(db.Float, nullable=False, default=0.0)
-    net_growth = db.Column(db.Float, nullable=False, default=0.0)
-    comments = db.Column(db.Text, nullable=True, default='')
+    total_income = db.Column(db.Float, nullable=True)
+    total_expenses = db.Column(db.Float, nullable=True)
+    net_growth = db.Column(db.Float, nullable=True)
+    comments = db.Column(db.Text, nullable=True)
 
     def __repr__(self):
         return f'<FinancialReport {self.id}>'
@@ -471,7 +471,7 @@ class FinancialReport(db.Model):
     @property
     def file_name(self):
         current_time = datetime.datetime.utcnow().strftime('%Y%m%d_%H%M%S')
-        return f'财务报表_{current_time}.xlsx'
+        return f'fr_{current_time}.xlsx'
 
     def to_json(self):
         # json_data 和 xlsx_data 字段往往过于庞大，因此不在这里返回，需要单独获取
