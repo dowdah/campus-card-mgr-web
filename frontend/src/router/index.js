@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import Home from '../views/Home.vue';
 import Login from '../components/Login.vue';
 import Dashboard from '../components/Dashboard.vue';
-import CardDetails from '../views/CardDetails.vue';
+import PwdReset from '../views/PwdReset.vue';
 import store from '../store';
 
 const routes = [
@@ -14,7 +14,7 @@ const routes = [
     component: Dashboard,
     meta: { requiresAuth: true }
   },
-  { path: '/card-details', name: 'CardDetails', component: CardDetails }
+  { path: '/reset-pwd', name: 'PwdReset', component: PwdReset }
 ];
 
 const router = createRouter({
