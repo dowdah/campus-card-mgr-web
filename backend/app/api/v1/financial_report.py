@@ -87,7 +87,7 @@ def download_report(report_id):
 
 
 @fr_bp.route('/rm/<int:report_id>', methods=['DELETE'])
-@permission_required(Permission.GENERATE_REPORTS)
+@permission_required(Permission.DEL_REPORTS)
 def remove_report(report_id):
     report = FinancialReport.query.get_or_404(report_id)
     db.session.delete(report)

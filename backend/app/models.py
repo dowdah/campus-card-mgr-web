@@ -78,7 +78,9 @@ class Role(db.Model):
                 Permission.DEL_USER,
                 Permission.GENERATE_REPORTS,
                 Permission.EXPORT_REPORTS,
-                Permission.CHANGE_CARD_BALANCE
+                Permission.CHANGE_CARD_BALANCE,
+                Permission.ADD_USER,
+                Permission.DEL_REPORTS
             ],
             'SiteOperator': [
                 Permission.OPERATOR
@@ -111,13 +113,15 @@ class Permission:
     VIEW_USER_INFO = 1024  # 查看用户信息
     MODIFY_USER_INFO = 2048  # 修改用户信息
     DEL_USER = 4096  # 删除用户
-    GENERATE_REPORTS = 8192  # 生成报告或删除报告
+    GENERATE_REPORTS = 8192  # 生成报告
     EXPORT_REPORTS = 16384  # 下载报告
     MANAGE_PERMISSIONS = 32768  # 调整角色权限
     BACKUP_DATA = 65536  # 备份数据
     RESTORE_DATA = 131072  # 恢复数据
     CHANGE_CARD_BALANCE = 262144  # 更改卡余额
     OPERATOR = 524288  # 操作员权限
+    ADD_USER = 1048576  # 添加用户
+    DEL_REPORTS = 2097152  # 删除报告
 
 
 class User(db.Model):
