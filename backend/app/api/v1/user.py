@@ -139,3 +139,37 @@ def operate_user(id):
                 'msg': 'Permission denied'
             }
     return jsonify(response_json), response_json['code']
+
+
+@user_bp.route('/new', methods=['POST'])
+@permission_required(Permission.ADD_USER)
+def new_user():
+    # 创建新用户
+    if g.data is None:
+        response_json = {
+            'success': False,
+            'code': 400,
+            'msg': 'No data provided'
+        }
+        return jsonify(response_json), response_json['code']
+    try:
+        user = User()
+        for k, v in g.data.items():
+            setattr(user, k, v)
+        else:
+            db.session.add(user)
+            db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        response_json = {
+            'success': False,
+            'code': 400,
+            'msg': 'Invalid data provided'
+        }
+    else:
+        response_json = {
+            'success': True,
+            'code': 200,
+            'msg': 'User created successfully'
+        }
+    return jsonify(response_json), response_json['code']
