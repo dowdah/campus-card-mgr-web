@@ -6,7 +6,7 @@ from . import api_bp
 auth = HTTPBasicAuth()
 BYPASS_AUTH = ['api.v1.auth.login', 'api.v1.test', 'api.v1.auth.send_reset_password_email',
                'api.v1.auth.reset_password']
-CONFIRMATION_BYPASS = BYPASS_AUTH + ['api.v1.auth.send_confirmation', 'api.v1.auth.confirm']
+CONFIRMATION_BYPASS = BYPASS_AUTH + ['api.v1.auth.send_confirmation', 'api.v1.auth.confirm', 'api.v1.auth.get_me']
 
 
 @auth.verify_password

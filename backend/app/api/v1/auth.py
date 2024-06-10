@@ -4,7 +4,7 @@ from ...decorators import permission_required
 from ... import db
 
 auth_bp = Blueprint('auth', __name__)
-ALLOW_TOKEN_REFRESH = True  # 是否允许使用 token 刷新 token，若不允许，客户端将在 token 过期后被要求重新登录
+ALLOW_TOKEN_REFRESH = True  # 是否允许使用 token 刷新 token，若不允许，客户端将总是在登录有限时长后被要求重新登录
 
 
 @auth_bp.before_request
@@ -34,6 +34,9 @@ def get_me():
         'code': 200,
         'user': g.current_user.to_json()
     }
+    if ALLOW_TOKEN_REFRESH:
+        response_json['token'] = g.current_user.generate_auth_token()
+        response_json['expiration'] = current_app.config['API_TOKEN_EXPIRATION']
     return jsonify(response_json), response_json['code']
 
 
@@ -41,63 +44,47 @@ def get_me():
 def login():
     data = g.data
     student_id = data.get('student_id')
+    email = data.get('email')
     password = data.get('password')
-    if student_id and password:
-        user = User.query.filter_by(student_id=student_id).first()
-        if user:
-            if user.can(Permission.LOGIN):
-                if user.verify_password(password):
-                    response_json = {
-                        'success': True,
-                        'code': 200,
-                        'msg': '登录成功。',
-                        'token': user.generate_auth_token(),
-                        'expiration': current_app.config['API_TOKEN_EXPIRATION'],
-                        'user': user.to_json()
-                    }
-                else:
-                    response_json = {
-                        'success': False,
-                        'code': 401,
-                        'msg': '用户名或密码错误。'
-                    }
-            else:
-                response_json = {
-                    'success': False,
-                    'code': 403,
-                    'msg': '你无权登录，联系管理员。'
-                }
-        else:
-            response_json = {
-                'success': False,
-                'code': 401,
-                'msg': '用户名或密码错误。'
-            }
+    user, user_1, user_2 = None, None, None
+    if student_id:
+        user_1 = User.query.filter_by(student_id=student_id).first()
+    if email:
+        user_2 = User.query.filter_by(email=email).first()
+    if user_1 and user_2:
+        return abort(400)
+    elif user_1:
+        user = user_1
+    elif user_2:
+        user = user_2
     else:
         response_json = {
             'success': False,
             'code': 400,
-            'msg': '参数错误。'
+            'msg': '凭据错误，核查你输入的信息是否正确。'
         }
-    return jsonify(response_json), response_json['code']
-
-
-@auth_bp.route('/refresh')
-@permission_required(Permission.LOGIN)
-def get_token():
-    if g.token_used and not ALLOW_TOKEN_REFRESH:
-        response_json = {
-            'success': False,
-            'code': 401,
-            'msg': 'Users are prohibited from using token to get token'
-        }
+        return jsonify(response_json), response_json['code']
+    if user.can(Permission.LOGIN):
+        if user.verify_password(password):
+            response_json = {
+                'success': True,
+                'code': 200,
+                'msg': '登录成功。',
+                'token': user.generate_auth_token(),
+                'expiration': current_app.config['API_TOKEN_EXPIRATION'],
+                'user': user.to_json()
+            }
+        else:
+            response_json = {
+                'success': False,
+                'code': 401,
+                'msg': '凭据错误。'
+            }
     else:
         response_json = {
-            'success': True,
-            'code': 200,
-            'msg': 'Token generated successfully',
-            'token': g.current_user.generate_auth_token(),
-            'expiration': current_app.config['API_TOKEN_EXPIRATION']
+            'success': False,
+            'code': 403,
+            'msg': '你被禁止登录，联系管理员。'
         }
     return jsonify(response_json), response_json['code']
 
@@ -144,7 +131,7 @@ def confirm(token):
         response_json = {
             'success': False,
             'code': 400,
-            'msg': 'Invalid token'
+            'msg': '验证码错误。'
         }
     return jsonify(response_json), response_json['code']
 
@@ -176,7 +163,7 @@ def send_reset_password_email():
         response_json = {
             'success': False,
             'code': 400,
-            'msg': '参数错误'
+            'msg': '不会有人把账号密码都忘了吧？'
         }
         return jsonify(response_json), response_json['code']
     task = current_app.celery.send_task('app.send_email', args=[[user.email],
@@ -233,7 +220,10 @@ def reset_password(token):
         response_json = {
             'success': True,
             'code': 200,
-            'msg': '密码重置成功'
+            'msg': '密码重置成功',
+            'user': user.to_json(),
+            'token': user.generate_auth_token(),
+            'expiration': current_app.config['API_TOKEN_EXPIRATION']
         }
     else:
         response_json = {
