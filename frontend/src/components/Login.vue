@@ -23,7 +23,11 @@
       </div>
       <button type="submit" class="login-button">确定</button>
     </form>
-    <div v-if="failed_login" class="error-message"><span class="error-icon">❎</span>{{ failed_response_data.msg }}</div>
+    <div v-if="failed_login" class="error-message"><span class="error-icon">❎</span>{{ failed_response_data.msg }}
+    <template v-if="failed_response_data.code==401">
+      <RouterLink to="/reset-pwd">忘记密码？</RouterLink>
+      </template>
+    </div>
   </div>
 </template>
 
