@@ -10,4 +10,4 @@ RUN pip install --no-cache-dir -r requirements/prod.txt
 
 COPY . .
 
-CMD celery -A celery_app.celery worker --loglevel=info --autoscale=9,2 & gunicorn -c gunicorn_config.py wsgi:app
+CMD celery -A wsgi.celery worker --loglevel=info --autoscale=9,2 & gunicorn -c gunicorn_config.py wsgi:app

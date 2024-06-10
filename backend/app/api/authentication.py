@@ -3,9 +3,10 @@ from flask import g, abort, request, jsonify
 from ..models import User, Permission
 from . import api_bp
 
-
 auth = HTTPBasicAuth()
-BYPASS_AUTH = ['api.v1.auth.login', 'api.v1.test']
+BYPASS_AUTH = ['api.v1.auth.login', 'api.v1.test', 'api.v1.auth.send_reset_password_email',
+               'api.v1.auth.reset_password']
+CONFIRMATION_BYPASS = BYPASS_AUTH + ['api.v1.auth.send_confirmation', 'api.v1.auth.confirm', 'api.v1.auth.get_me']
 
 
 @auth.verify_password
@@ -50,7 +51,7 @@ def unauthorized():
 @api_bp.before_request
 @auth.login_required
 def before_request():
-    if not g.is_anonymous and not g.current_user.confirmed:
+    if not (request.endpoint in CONFIRMATION_BYPASS or g.is_anonymous or g.current_user.confirmed):
         # User is not confirmed
         response_json = {
             'success': False,

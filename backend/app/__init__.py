@@ -2,6 +2,8 @@ from flask import Flask
 from config import config
 from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
+from celery import Celery
+import datetime
 
 db = SQLAlchemy()
 mail = Mail()
@@ -15,6 +17,27 @@ def method_not_allowed_error(e):
     return {'success': False, 'code': 405, 'msg': 'Method not allowed'}, 405
 
 
+def make_celery(app=None):
+    celery = Celery(
+        app.import_name if app else 'celery_app',
+        backend='redis://redis:6379/0',
+        broker='redis://redis:6379/0'
+    )
+
+    class ContextTask(celery.Task):
+        def __call__(self, *args, **kwargs):
+            if app:
+                with app.app_context():
+                    return self.run(*args, **kwargs)
+            else:
+                return self.run(*args, **kwargs)
+
+    celery.Task = ContextTask
+    if app:
+        celery.conf.update(app.config)
+    return celery
+
+
 def create_app(config_name):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
@@ -23,19 +46,20 @@ def create_app(config_name):
     config[config_name].init_app(app)
     mail.init_app(app)
     db.init_app(app)
-    from celery_app import celery
-    celery.conf.update(app.config)
+    celery = make_celery(app)
     app.celery = celery
     from .api import api_bp
     app.register_blueprint(api_bp, url_prefix='/api')
 
     with app.app_context():
-        # 导入模型和事件监听器
+        # 导入模型，事件监听器和Celery任务
         from . import models
         from . import listeners
+        from . import celery_tasks
 
     @app.context_processor
     def inject_variables():
-        return {'site_name': app.config['SITE_NAME']}
+        return {'site_name': app.config['SITE_NAME'], 'current_year': datetime.datetime.now().year,
+                'domain': app.config['DOMAIN']}
 
     return app

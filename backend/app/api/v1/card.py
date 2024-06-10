@@ -26,7 +26,7 @@ def get_cards():
                 'msg': 'No data provided'
             }
             return jsonify(response_json), response_json['code']
-        query = Card.query.odrder_by(Card.created_at.desc())
+        query = Card.query.order_by(Card.created_at.desc())
         try:
             for k, v in g.data.items():
                 query = query.filter(getattr(Card, k) == v)
@@ -215,7 +215,7 @@ def create_card(id):
     return jsonify(response_json), response_json['code']
 
 
-@card_bp.route('/del/<int:id>', methods=['DELETE'])
+@card_bp.route('/rm/<int:id>', methods=['DELETE'])
 @permission_required(Permission.DEL_CARD)
 def delete_card(id):
     card = Card.query.filter_by(id=id).first()

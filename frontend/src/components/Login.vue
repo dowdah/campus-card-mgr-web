@@ -3,8 +3,19 @@
     <h2>登录</h2>
     <form @submit.prevent="loginHandler" class="login-form">
       <div class="form-group">
+        <label for="login_choice">登录方式</label>
+        <select v-model="login_choice" required>
+          <option value="student_id">学号</option>
+          <option value="email">邮箱</option>
+        </select>
+      </div>
+      <div class="form-group" v-if="login_choice === 'student_id'">
         <label for="student_id">学号</label>
         <input type="text" v-model="student_id" required />
+      </div>
+      <div class="form-group" v-if="login_choice === 'email'">
+        <label for="email">邮箱</label>
+        <input type="email" v-model="email" required />
       </div>
       <div class="form-group">
         <label for="password">密码</label>
@@ -12,7 +23,11 @@
       </div>
       <button type="submit" class="login-button">确定</button>
     </form>
-    <div v-if="failed_login" class="error-message"><span class="error-icon">❎</span>{{ failed_response_data.msg }}</div>
+    <div v-if="failed_login" class="error-message"><span class="error-icon">❎</span>{{ failed_response_data.msg }}
+    <template v-if="failed_response_data.code==401">
+      <RouterLink to="/reset-pwd">忘记密码？</RouterLink>
+      </template>
+    </div>
   </div>
 </template>
 
@@ -42,6 +57,7 @@ h2 {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  width: 100%;
 }
 
 label {
@@ -49,8 +65,12 @@ label {
   color: #555;
 }
 
-input {
+select, input, .login-button {
   width: 100%;
+  box-sizing: border-box;
+}
+
+input, select {
   padding: 0.75rem;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -58,7 +78,7 @@ input {
   transition: border-color 0.3s;
 }
 
-input:focus {
+input:focus, select:focus {
   border-color: #007bff;
   outline: none;
 }
@@ -101,27 +121,29 @@ export default {
   name: 'Login',
   data() {
     return {
+      login_choice: 'student_id',
       student_id: '',
+      email: '',
       password: '',
       failed_login: false,
-      failed_response_data: null
+      failed_response_data: {}
     };
+  },
+  computed: {
+    credentials() {
+      if(this.login_choice === 'student_id'){
+        return { student_id: this.student_id, password: this.password };
+      } else {
+        return { email: this.email, password: this.password };
+      }
+    }
   },
   methods: {
     ...mapActions(['login']),
     async loginHandler() {
       console.log('Login form submitted');
       try {
-        await this.login({ student_id: this.student_id, password: this.password });
-        console.log('Login successful, navigating to Dashboard');
-        console.log('Router instance:', this.$router);
-
-        // 确保状态更新后再进行路由跳转
-        // this.$router.push({ name: 'Dashboard' }).then(() => {
-        //   console.log('Navigated to Dashboard');
-        // }).catch((error) => {
-        //   console.error('Navigation error:', error);
-        // });
+        await this.login(this.credentials);
       } catch (error) {
         this.failed_login = true;
         this.failed_response_data = error.response.data;

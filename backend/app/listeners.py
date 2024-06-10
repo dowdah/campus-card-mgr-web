@@ -1,7 +1,6 @@
-from . import db
 from sqlalchemy import event
 from sqlalchemy.orm import Session
-from .models import User, Role
+from .models import User, Role, FinancialReport
 
 
 def user_before_insert(mapper, connection, target):
