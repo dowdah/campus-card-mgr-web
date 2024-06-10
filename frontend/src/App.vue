@@ -2,12 +2,15 @@
   <div id="app">
     <Navbar />
     <h3>{{ title }}</h3>
-    <router-view></router-view>
+    <Unconfirmed v-if="unconfirmed" />
+    <router-view v-if="!unconfirmed"></router-view>
   </div>
 </template>
 
 <script>
 import Navbar from '@/components/Navbar.vue';
+import { mapGetters, mapActions } from 'vuex';
+import Unconfirmed from "@/views/Unconfirmed.vue";
 export default {
   name: 'App',
   data() {
@@ -16,8 +19,30 @@ export default {
     };
   },
   components: {
+    Unconfirmed,
     Navbar
-  }
+  },
+  computed: {
+    ...mapGetters(['isAuthenticated']),
+    user() {
+      return this.$store.state.user;
+    },
+    unconfirmed() {
+      if (this.isAuthenticated) {
+        return !this.user.confirmed;
+      } else {
+        return false;
+      }
+    }
+  },
+  methods: {
+    ...mapActions(['logout']),
+    logoutHandler() {
+      this.logout().then(() => {
+        this.$router.push({ name: 'Home' });
+      });
+    }
+  },
 };
 </script>
 
