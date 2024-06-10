@@ -1,15 +1,19 @@
 <template>
   <nav>
     <ul>
-      <li><router-link to="/">Home</router-link></li>
-      <li v-if="!isAuthenticated"><router-link to="/login">Login</router-link></li>
-      <li v-if="isAuthenticated"><router-link to="/dashboard">Dashboard</router-link></li>
+      <li><router-link to="/">主页</router-link></li>
+      <template v-if="!isAuthenticated">
+      <li><router-link to="/reset-pwd">忘记密码</router-link></li>
+      </template>
+      <template v-if="isAuthenticated">
+      <li><router-link to="/dashboard">总览</router-link></li>
+      </template>
     </ul>
   </nav>
 </template>
 
 <script>
-import { mapGetters, mapActions } from 'vuex';
+import { mapGetters } from 'vuex';
 export default {
   name: 'Navbar',
   computed: {
