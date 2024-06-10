@@ -4,7 +4,7 @@ from ...decorators import permission_required
 from ... import db
 
 auth_bp = Blueprint('auth', __name__)
-ALLOW_TOKEN_REFRESH = True  # 是否允许使用 token 刷新 token，若不允许，客户端将在 token 过期后被要求重新登录
+ALLOW_TOKEN_REFRESH = True  # 是否允许使用 token 刷新 token，若不允许，客户端将总是在登录有限时长后被要求重新登录
 
 
 @auth_bp.before_request
@@ -34,6 +34,9 @@ def get_me():
         'code': 200,
         'user': g.current_user.to_json()
     }
+    if ALLOW_TOKEN_REFRESH:
+        response_json['token'] = g.current_user.generate_auth_token()
+        response_json['expiration'] = current_app.config['API_TOKEN_EXPIRATION']
     return jsonify(response_json), response_json['code']
 
 
@@ -86,26 +89,6 @@ def login():
     return jsonify(response_json), response_json['code']
 
 
-@auth_bp.route('/refresh')
-@permission_required(Permission.LOGIN)
-def get_token():
-    if g.token_used and not ALLOW_TOKEN_REFRESH:
-        response_json = {
-            'success': False,
-            'code': 401,
-            'msg': 'Users are prohibited from using token to get token'
-        }
-    else:
-        response_json = {
-            'success': True,
-            'code': 200,
-            'msg': 'Token generated successfully',
-            'token': g.current_user.generate_auth_token(),
-            'expiration': current_app.config['API_TOKEN_EXPIRATION']
-        }
-    return jsonify(response_json), response_json['code']
-
-
 @auth_bp.route('/send-confirmation')
 def send_confirmation():
     if g.current_user.confirmed:
@@ -148,7 +131,7 @@ def confirm(token):
         response_json = {
             'success': False,
             'code': 400,
-            'msg': 'Invalid token'
+            'msg': '验证码错误。'
         }
     return jsonify(response_json), response_json['code']
 
@@ -180,7 +163,7 @@ def send_reset_password_email():
         response_json = {
             'success': False,
             'code': 400,
-            'msg': '参数错误'
+            'msg': '不会有人把账号密码都忘了吧？'
         }
         return jsonify(response_json), response_json['code']
     task = current_app.celery.send_task('app.send_email', args=[[user.email],
@@ -237,7 +220,10 @@ def reset_password(token):
         response_json = {
             'success': True,
             'code': 200,
-            'msg': '密码重置成功'
+            'msg': '密码重置成功',
+            'user': user.to_json(),
+            'token': user.generate_auth_token(),
+            'expiration': current_app.config['API_TOKEN_EXPIRATION']
         }
     else:
         response_json = {
