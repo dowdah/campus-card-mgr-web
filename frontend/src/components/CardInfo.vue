@@ -1,54 +1,197 @@
 <template>
-  <div>
-    <div>
-      <p>卡号: {{ card.id }}</p>
-      <p>余额: {{ card.balance }}</p>
-      <p>状态: {{ card.status }}</p>
+  <div class="card-info">
+    <div class="card-summary">
+      <table>
+        <tr>
+          <td>卡号:</td>
+          <td>{{ card.id }}</td>
+        </tr>
+        <tr>
+          <td>余额:</td>
+          <td>{{ card.balance }}</td>
+        </tr>
+        <tr>
+          <td>状态:</td>
+          <td>{{ card.status }}</td>
+        </tr>
+        <tr>
+          <td>创建时间:</td>
+          <td>{{ card.created_at }}</td>
+        </tr>
+        <tr v-if="fetchedTransactions">
+          <td>交易数量:</td>
+          <td>{{ responseData.total }}</td>
+        </tr>
+      </table>
     </div>
+    <button @click="$emit('reportLost', card.id)" v-if="!card.is_lost" class="report-lost-button">挂失</button>
     <button @click="$emit('toggleCardDetails', card.id)">
-      {{ showDetails ? '隐藏详情' : '显示详情' }}
+      {{ showDetails ? '隐藏交易' : '显示交易' }}
     </button>
-    <div v-if="showDetails">
+    <div v-if="showDetails" class="details">
       <div v-if="fetchedTransactions">
-        <p>共 {{ responseData.total }} 条交易</p><p>当前页: {{ currentPage }}</p>
-        <div>
-          <label for="itemsPerPage">每页显示:</label>
-          <select v-model="itemsPerPage">
-            <option value="2">2</option>
-            <option value="5">5</option>
-            <option value="10">10</option>
-          </select>
+        <div class="transactions-summary">
+          <div class="transaction-controls">
+          <p>页:（{{ currentPage }}/{{ responseData.pages }})</p>
+          <div class="page-size-selector">
+            <label for="itemsPerPage">每页显示:</label>
+            <select v-model="itemsPerPage">
+              <option value="2">2</option>
+              <option value="5">5</option>
+              <option value="10">10</option>
+            </select>
+          </div>
+            </div>
         </div>
-        <p>共 {{ responseData.pages }} 页</p>
-      <div v-for="transaction in responseData.card.transactions" :key="transaction.id">
-        <p>交易ID: {{ transaction.id }}</p>
-        <p>金额: {{ transaction.amount }}</p>
-        <p>创建时间: {{ transaction.created_at }}</p>
-        <p>当前余额: {{ transaction.current_balance }}</p>
-        <p v-if="transaction.is_canceled">交易已取消</p>
-      </div>
-      <div>
-        <button @click="prevPage" :disabled="!responseData.has_prev">上一页</button>
-        <button @click="nextPage" :disabled="!responseData.has_next">下一页</button>
-
-      </div>
+        <div class="transaction-list">
+          <table>
+            <tr>
+              <th>交易ID</th>
+              <th>金额</th>
+              <th>创建时间</th>
+              <th>交易前余额</th>
+              <th>交易后余额</th>
+              <th>状态</th>
+            </tr>
+            <tr v-for="transaction in responseData.card.transactions" :key="transaction.id" class="transaction">
+              <td>{{ transaction.id }}</td>
+              <td>{{ transaction.amount }}</td>
+              <td>{{ transaction.created_at }}</td>
+              <td>{{ transaction.original_balance }} ¥</td>
+              <td>{{ transaction.current_balance }} ¥</td>
+              <td v-if="transaction.is_canceled">交易已取消</td>
+              <td v-else>正常</td>
+            </tr>
+          </table>
         </div>
+        <div class="pagination-buttons">
+          <button @click="prevPage" :disabled="!responseData.has_prev">上一页</button>
+          <button @click="nextPage" :disabled="!responseData.has_next">下一页</button>
+        </div>
+      </div>
       <div v-else-if="fetchedFailed">
         <p>获取交易失败: {{ responseData.msg }}</p>
-        </div>
+      </div>
       <div v-else>
         <p>加载中...</p>
-        </div>
+      </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.card-info {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  font-family: 'Arial', sans-serif;
+  border: 1px solid #ccc;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 600px;
+  margin: 2em auto;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  background-color: white;
+}
+
+.card-summary table {
+  width: 100%;
+}
+
+.card-summary td {
+  padding: 5px;
+}
+
+.card-summary td:first-child {
+  font-weight: bold;
+}
+
+button {
+  margin: 10px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  background-color: #007BFF;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+button:disabled {
+  background-color: #ccc;
+}
+
+.details {
+  animation: fadeIn 0.3s;
+}
+
+.transactions-summary, .transaction-list, .pagination-buttons {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.page-size-selector {
+display: flex;
+  align-items: center;
+}
+
+.transaction {
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.transaction-list table {
+  width: 100%;
+}
+
+.transaction-list th {
+  padding: 10px;
+  background-color: #f2f2f2;
+  font-weight: bold;
+  text-align: left;
+}
+
+.transaction-list td {
+  padding: 10px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.transaction-controls {
+  display: flex;
+  justify-content: space-between;
+}
+
+.report-lost-button {
+  margin: 10px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  background-color: #dc3545;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.report-lost-button:hover {
+  background-color: #c82333;
+}
+</style>
 
 <script>
 import axios from 'axios';
 import { BASE_API_URL } from '@/config/constants';
 export default {
   name: 'CardInfo',
-  emits: ['toggleCardDetails'],
+  emits: ['toggleCardDetails', 'reportLost'],
   props: {
     card: {
       type: Object,
