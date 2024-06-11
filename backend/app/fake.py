@@ -4,6 +4,7 @@ from faker import Faker
 from . import db
 from .models import User, Card, Role
 from time import sleep
+from alive_progress import alive_bar
 
 
 def users(count=20):
@@ -47,11 +48,13 @@ def cards():
 def transactions():
     fake = Faker()
     card_list = Card.query.all()
-    for card in card_list:
-        for i in range(0, randint(1, 3)):
-            offset = randint(-card.balance, 100)
-            card.balance += offset
-            sleep(1)
+    with alive_bar(len(card_list)) as bar:
+        for card in card_list:
+            for i in range(0, randint(1, 3)):
+                offset = randint(-card.balance, 100)
+                card.balance += offset
+                sleep(1)
+            bar()
 
 
 def main():
