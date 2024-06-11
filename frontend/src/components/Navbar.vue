@@ -6,7 +6,7 @@
       <li><router-link to="/reset-pwd">忘记密码</router-link></li>
       </template>
       <template v-if="isAuthenticated">
-      <li><router-link to="/dashboard">总览</router-link></li>
+      <li><router-link to="/cards">我的一卡通</router-link></li>
       </template>
     </ul>
   </nav>
