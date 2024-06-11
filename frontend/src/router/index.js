@@ -26,15 +26,15 @@ router.beforeEach(async (to, from, next) => {
   console.log(`Navigating to: ${to.name}`);
   if (to.matched.some(record => record.meta.requiresAuth)) {
     if (!store.getters.isAuthenticated) {
-      console.log('Not authenticated, redirecting to Login');
-      next({ name: 'Login' });
+      console.log('Not authenticated, redirecting to Home');
+      next({ name: 'Home' });
     } else {
       console.log('Authenticated, proceeding to route');
       next();
     }
   } else if (to.matched.some(record => record.meta.blockWhenAuthenticated)) {
     if (store.getters.isAuthenticated) {
-      console.log('Already authenticated, redirecting to Dashboard');
+      console.log('Already authenticated, redirecting to Home');
       next({ name: 'Home' });
     } else {
       console.log('Not authenticated, proceeding to route');
