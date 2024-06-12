@@ -1,77 +1,83 @@
 <template>
-  <h4>我的交易</h4>
-  <div>
-    <label for="startDate">选择开始日期:</label>
-    <input type="date" id="startDate" v-model="startDate" :max="aDayBeforeEndDate" class="no-input">
-    <p>选择的日期是: {{ startDate }}</p>
-  </div>
-  <div>
-    <label for="endDate">选择结束日期:</label>
-    <input type="date" id="endDate" v-model="endDate" :max="getToday()" class="no-input">
-    <p>选择的日期是: {{ endDate }}</p>
-  </div>
-  <div>
-    <label for="cardId">选择卡号:</label>
-    <select id="cardId" v-model="selectedCardId">
-      <option value="">未选择</option>
-      <option v-for="cardId in cardIds" :key="cardId" :value="cardId">{{ cardId }}</option>
-    </select>
-  </div>
-  <div>
-    <label for="transactionStatus">选择交易状态:</label>
-    <select id="transactionStatus" v-model="transactionStatus">
-      <option value="all">全部</option>
-      <option value="normal">正常</option>
-      <option value="canceled">已取消</option>
-    </select>
-  </div>
-  <div>
-    <label for="perPage">每页显示:</label>
-    <select id="perPage" v-model="perPage">
-      <option value="5">5</option>
-      <option value="10">10</option>
-      <option value="15">15</option>
-    </select>
-  <div>
-    <label for="immidiateQuery">更改条件立即查询:</label>
-    <input type="checkbox" id="immidiateQuery" v-model="immediateQuery">
-    <button @click="queryHandler" :disabled="isLoading">查询</button>
-  </div>
-    <div v-if="requestFailed">
+  <div class="transactions-container">
+    <h2 class="title">我的交易</h2>
+    <p class="hint">如果遇到性能问题，取消勾选“立即查询”</p>
+    <div class="filters-group">
+      <div class="form-group">
+        <label for="startDate">开始日期</label>
+        <input type="date" id="startDate" v-model="startDate" :max="aDayBeforeEndDate" class="form-control no-input">
+      </div>
+      <div class="form-group">
+        <label for="endDate">结束日期</label>
+        <input type="date" id="endDate" v-model="endDate" :max="getToday()" class="form-control no-input">
+      </div>
+      <div class="form-group">
+        <label for="cardId">卡号</label>
+        <select id="cardId" v-model="selectedCardId" class="form-control">
+          <option value="">未选择</option>
+          <option v-for="cardId in cardIds" :key="cardId" :value="cardId">{{ cardId }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="transactionStatus">交易状态</label>
+        <select id="transactionStatus" v-model="transactionStatus" class="form-control">
+          <option value="all">全部</option>
+          <option value="normal">正常</option>
+          <option value="canceled">已取消</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="perPage">每页显示</label>
+        <select id="perPage" v-model="perPage" class="form-control">
+          <option value="5">5</option>
+          <option value="10">10</option>
+          <option value="15">15</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="immediateQuery">立即查询</label>
+        <input type="checkbox" id="immediateQuery" v-model="immediateQuery" class="form-control">
+      </div>
+    </div>
+    <button v-if="!immediateQuery" @click="queryHandler" :disabled="isLoading" class="btn btn-primary query-btn">查询</button>
+    <div v-if="requestFailed" class="alert alert-danger">
       <p>查询失败: {{ responseData.msg }}</p>
     </div>
     <div v-else-if="fetchedTransactions">
-      <div>
+      <div class="results-summary">
         <p>交易数量: {{ responseData.total }}</p>
+        <p>页:（{{ currentPage }}/{{ responseData.pages }})</p>
       </div>
-      <p>页:（{{ currentPage }}/{{ responseData.pages }})</p>
-      <div>
-        <button @click="prevPage" :disabled="!responseData.has_prev">上一页</button>
-        <button @click="nextPage" :disabled="!responseData.has_next">下一页</button>
-      </div>
-      <div>
-        <table>
-          <tr>
-            <th>交易ID</th>
-            <th>金额</th>
-            <th>时间</th>
-            <th>卡号</th>
-            <th>交易前余额</th>
-            <th>交易后余额</th>
-            <th>状态</th>
-          </tr>
-          <tr v-for="transaction in responseData.transactions" :key="transaction.id">
-            <td>{{ transaction.id }}</td>
-            <td>{{ transaction.amount }}</td>
-            <td>{{ transaction.created_at }}</td>
-            <td>{{ transaction.card_id }}</td>
-            <td>{{ transaction.original_balance }} ¥</td>
-            <td>{{ transaction.current_balance }} ¥</td>
-            <td v-if="transaction.is_canceled">交易已取消</td>
-            <td v-else>正常</td>
-          </tr>
+      <div class="transactions-table">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>交易ID</th>
+              <th>金额</th>
+              <th>时间</th>
+              <th>卡号</th>
+              <th>交易前余额</th>
+              <th>交易后余额</th>
+              <th>状态</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="transaction in responseData.transactions" :key="transaction.id">
+              <td>{{ transaction.id }}</td>
+              <td>{{ transaction.amount }}</td>
+              <td>{{ transaction.created_at }}</td>
+              <td>{{ transaction.card_id }}</td>
+              <td>{{ transaction.original_balance }} ¥</td>
+              <td>{{ transaction.current_balance }} ¥</td>
+              <td>{{ transaction.status }}</td>
+            </tr>
+          </tbody>
         </table>
-        </div>
+      </div>
+            <div class="pagination">
+        <button @click="prevPage" :disabled="!responseData.has_prev" class="btn btn-secondary">上一页</button>
+        <button @click="nextPage" :disabled="!responseData.has_next" class="btn btn-secondary">下一页</button>
+      </div>
     </div>
   </div>
 </template>
@@ -83,6 +89,125 @@ input[type="date"].no-input {
 
 input[type="date"].no-input::-webkit-calendar-picker-indicator {
   pointer-events: auto;
+}
+
+.transactions-container {
+  max-width: 800px;
+  margin: auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.filters-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-control {
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  width: 200px;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  background-color: #007BFF;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.btn:disabled {
+  background-color: #ccc;
+}
+
+.btn:hover {
+  background-color: #0056b3;
+}
+
+.btn:disabled:hover {
+  background-color: #ccc;
+}
+
+.alert {
+  padding: 10px;
+  border-radius: 5px;
+  background-color: #f8d7da;
+  color: #721c24;
+  margin-top: 20px;
+}
+
+.results-summary {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.pagination {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.transactions-table {
+  margin-top: 20px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  cursor: default;
+}
+
+.table th,
+.table td {
+  padding: 10px;
+  border: 1px solid #ccc;
+  text-align: center;
+}
+
+.table th {
+  background-color: #f1f1f1;
+}
+
+.table tbody tr:nth-child(even) {
+  background-color: #ffffff;
+}
+
+.table tbody tr:hover {
+  background-color: #f1f1f1;
+}
+
+.title {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.query-btn {
+  margin-top: 20px;
+}
+
+.hint {
+  text-align: center;
+  margin-top: 10px;
+  font-size: 14px;
+  color: #666;
 }
 </style>
 
@@ -104,7 +229,7 @@ export default {
       startDate: null,
       endDate: this.getToday(),
       transactionStatus: 'all',
-      immediateQuery: false
+      immediateQuery: true
     }
   },
   computed: {
@@ -196,6 +321,11 @@ export default {
         }
       },
       deep: true
+    }
+  },
+  created() {
+    if (this.immediateQuery){
+      this.fetchTransactions(this.currentPage, this.perPage);
     }
   }
 }
