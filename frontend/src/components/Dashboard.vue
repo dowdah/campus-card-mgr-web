@@ -1,6 +1,5 @@
 <template>
   <div>
-    <LoadingSpinner :isLoading="loading"></LoadingSpinner>
     <div class="dashboard">
       <template v-if="user">
       <div class="user-info">
@@ -60,7 +59,7 @@
           </div>
         </div>
       </div>
-      <button @click="logoutHandler" class="logout-button" :disabled="loading">登出</button>
+      <button @click="logoutHandler" class="logout-button" :disabled="isLoading">登出</button>
       </template>
     </div>
   </div>
@@ -161,29 +160,22 @@ h2 {
 }
 </style>
 <script>
-import { mapGetters, mapActions } from 'vuex';
-import LoadingSpinner from "./LoadingSpinner.vue";
+import { mapGetters, mapActions, mapState } from 'vuex';
 export default {
   name: 'Dashboard',
-    data() {
-      return {
-        loading: false
-      };
-    },
-  components: {
-    LoadingSpinner
-  },
   computed: {
     ...mapGetters(['isAuthenticated']),
+    ...mapState(['isLoading']),
     user() {
       return this.$store.state.user;
     }
   },
   methods: {
-    ...mapActions(['logout']),
+    ...mapActions(['logout', 'setLoading']),
     logoutHandler() {
-      this.loading = true
+      this.setLoading(true);
       this.logout().then(() => {
+        this.setLoading(false);
         this.$router.push({ name: 'Home' });
       });
     }

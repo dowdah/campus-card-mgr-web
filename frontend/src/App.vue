@@ -4,13 +4,15 @@
     <h3>{{ title }}</h3>
     <Unconfirmed v-if="unconfirmed" />
     <router-view v-if="!unconfirmed"></router-view>
+    <LoadingSpinner/>
   </div>
 </template>
 
 <script>
 import Navbar from '@/components/Navbar.vue';
-import { mapGetters, mapActions } from 'vuex';
+import { mapGetters, mapActions, mapState } from 'vuex';
 import Unconfirmed from "@/views/Unconfirmed.vue";
+import LoadingSpinner from '@/components/LoadingSpinner.vue';
 export default {
   name: 'App',
   data() {
@@ -20,7 +22,8 @@ export default {
   },
   components: {
     Unconfirmed,
-    Navbar
+    Navbar,
+    LoadingSpinner
   },
   computed: {
     ...mapGetters(['isAuthenticated']),

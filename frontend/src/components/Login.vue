@@ -1,7 +1,5 @@
 <template>
   <div>
-    <!-- 加载动画组件，通过:isLoading绑定loading状态 -->
-    <LoadingSpinner :isLoading="loading" />
     <div class="login-container">
       <h2>登陆</h2>
       <!-- 登录表单，阻止默认提交行为 -->
@@ -29,7 +27,7 @@
           <input type="password" v-model="password" required />
         </div>
         <!-- 提交按钮 -->
-        <button type="submit" class="login-button" :disabled="loading">确认</button>
+        <button type="submit" class="login-button" :disabled="isLoading">确认</button>
       </form>
       <!-- 登录失败信息显示 -->
       <div v-if="failed_login" class="error-message">
@@ -132,14 +130,10 @@ input:focus, select:focus {
 </style>
 
 <script>
-import { mapActions } from 'vuex';
-import LoadingSpinner from "./LoadingSpinner.vue";
+import { mapActions, mapState } from 'vuex';
 
 export default {
   name: 'Login',
-  components: {
-    LoadingSpinner
-  },
   data() {
     return {
       login_choice: 'student_id', // 默认登录方式为学号
@@ -148,10 +142,10 @@ export default {
       password: '',
       failed_login: false, // 登录失败状态
       failed_response_data: {}, // 登录失败的响应数据
-      loading: false // 加载状态
     };
   },
   computed: {
+    ...mapState(['isLoading']),
     credentials() {
       // 根据登录方式返回相应的凭证信息
       return this.login_choice === 'student_id'
@@ -160,16 +154,16 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['login']),
+    ...mapActions(['login', 'setLoading']),
     async loginHandler() {
-      this.loading = true;
+      this.setLoading(true);
       try {
         await this.login(this.credentials);
-        this.loading = false;
       } catch (error) {
-        this.loading = false;
         this.failed_login = true;
         this.failed_response_data = error.response.data;
+      } finally {
+        this.setLoading(false);
       }
     }
   }

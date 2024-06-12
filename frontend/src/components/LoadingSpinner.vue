@@ -1,16 +1,16 @@
 <template>
-  <div class="spinner-overlay" v-show="isLoading">
+  <transition name="spinner">
+  <div class="spinner-overlay" v-if="isLoading">
     <div class="spinner"></div>
   </div>
+  </transition>
 </template>
 
 <script>
+import { mapState } from 'vuex';
 export default {
-  props: {
-    isLoading: {
-      type: Boolean,
-      default: false
-    }
+  computed: {
+    ...mapState(['isLoading'])
   }
 }
 </script>
@@ -26,7 +26,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: 1001;
 }
 
 .spinner {
@@ -45,5 +45,15 @@ export default {
   100% {
     transform: rotate(360deg);
   }
+}
+
+.spinner-enter-active,
+.spinner-leave-active {
+  transition: opacity 100ms ease;
+}
+
+.spinner-enter-from,
+.spinner-leave-to {
+  opacity: 0;
 }
 </style>

@@ -4,7 +4,8 @@ import axios from 'axios';
 
 const store = createStore({
     state: {
-        user: null
+        user: null,
+        isLoading: false
     },
     mutations: {
         setUser(state, user) {
@@ -18,7 +19,10 @@ const store = createStore({
         },
         clearUser(state) {
             state.user = null;
-        }
+        },
+            setLoading(state, isLoading) {
+      state.isLoading = isLoading;
+    }
     },
     actions: {
         async login({ commit }, credentials) {
@@ -84,7 +88,10 @@ const store = createStore({
                 console.error('Reset password error:', error);
                 throw error;
             }
-        }
+        },
+            setLoading({ commit }, isLoading) {
+      commit('setLoading', isLoading);
+    }
     },
     getters: {
         isAuthenticated: state => !!state.user
