@@ -53,6 +53,12 @@ const store = createStore({
             commit('setLoading', false);
         },
         async init({ commit, state }) {
+            // 当加载时间超过 500ms 时，显式加载。
+            let setLoadingCalled = false;
+            const timer = setTimeout(() => {
+                setLoadingCalled = true;
+                commit('setLoading', true);
+            }, 500);
             const token = localStorage.getItem('token');
             console.log('Init action called with token:', token)
             if (token) {
@@ -73,6 +79,12 @@ const store = createStore({
                     localStorage.removeItem('token');
                     commit('clearUser');
                 }
+            }
+            // 如果加载时间未超过 500ms，取消计时器。若计时器已触发，取消加载状态。
+            if (!setLoadingCalled) {
+                clearTimeout(timer);
+            } else {
+                commit('setLoading', false);
             }
         },
         async resetPassword({ commit }, payload) {
