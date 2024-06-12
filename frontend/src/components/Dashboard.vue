@@ -59,7 +59,7 @@
               <div class="info-cell">{{ transaction.amount }} ¥</div>
               <div class="info-cell">{{ transaction.original_balance }} ¥</div>
               <div class="info-cell">{{ transaction.current_balance }} ¥</div>
-              <div class="info-cell">{{ transaction.is_canceled ? "已取消" : "正常" }}</div>
+              <div class="info-cell">{{ transaction.status }}</div>
             </div>
           </div>
         </div>
