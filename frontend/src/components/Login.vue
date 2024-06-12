@@ -1,32 +1,35 @@
 <template>
-  <div class="login-container">
-    <h2>登录</h2>
-    <form @submit.prevent="loginHandler" class="login-form">
-      <div class="form-group">
-        <label for="login_choice">登录方式</label>
-        <select v-model="login_choice" required>
-          <option value="student_id">学号</option>
-          <option value="email">邮箱</option>
-        </select>
+  <div>
+    <LoadingSpinner :isLoading="loading"></LoadingSpinner>
+    <div class="login-container">
+      <h2>登陆</h2>
+      <form @submit.prevent="loginHandler" class="login-form">
+        <div class="form-group">
+          <label for="login_choice">登录方式</label>
+          <select v-model="login_choice" required>
+            <option value="student_id">学号</option>
+            <option value="email">邮箱</option>
+          </select>
+        </div>
+        <div class="form-group" v-if="login_choice === 'student_id'">
+          <label for="student_id">学号</label>
+          <input type="text" v-model="student_id" required />
+        </div>
+        <div class="form-group" v-if="login_choice === 'email'">
+          <label for="email">邮箱</label>
+          <input type="email" v-model="email" required />
+        </div>
+        <div class="form-group">
+          <label for="password">密码</label>
+          <input type="password" v-model="password" required />
+        </div>
+        <button type="submit" class="login-button">确认</button>
+      </form>
+      <div v-if="failed_login" class="error-message"><span class="error-icon">❎</span>{{ failed_response_data.msg }}
+      <template v-if="failed_response_data.code==401">
+        <RouterLink to="/reset-pwd">忘记密码？</RouterLink>
+        </template>
       </div>
-      <div class="form-group" v-if="login_choice === 'student_id'">
-        <label for="student_id">学号</label>
-        <input type="text" v-model="student_id" required />
-      </div>
-      <div class="form-group" v-if="login_choice === 'email'">
-        <label for="email">邮箱</label>
-        <input type="email" v-model="email" required />
-      </div>
-      <div class="form-group">
-        <label for="password">密码</label>
-        <input type="password" v-model="password" required />
-      </div>
-      <button type="submit" class="login-button">确定</button>
-    </form>
-    <div v-if="failed_login" class="error-message"><span class="error-icon">❎</span>{{ failed_response_data.msg }}
-    <template v-if="failed_response_data.code==401">
-      <RouterLink to="/reset-pwd">忘记密码？</RouterLink>
-      </template>
     </div>
   </div>
 </template>
@@ -116,6 +119,7 @@ input:focus, select:focus {
 
 <script>
 import { mapActions } from 'vuex';
+import LoadingSpinner from "./LoadingSpinner.vue";
 
 export default {
   name: 'Login',
@@ -126,8 +130,12 @@ export default {
       email: '',
       password: '',
       failed_login: false,
-      failed_response_data: {}
+      failed_response_data: {},
+      loading: false
     };
+  },
+  components: {
+    LoadingSpinner
   },
   computed: {
     credentials() {
@@ -143,8 +151,10 @@ export default {
     async loginHandler() {
       console.log('Login form submitted');
       try {
+        this.loading = true;
         await this.login(this.credentials);
       } catch (error) {
+        this.loading = false;
         this.failed_login = true;
         this.failed_response_data = error.response.data;
       }
