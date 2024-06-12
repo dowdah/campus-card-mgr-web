@@ -1,16 +1,15 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Home from '../views/Home.vue';
-import Login from '../components/Login.vue';
-import Dashboard from '../components/Dashboard.vue';
+import Cards from '../views/Cards.vue';
 import PwdReset from '../views/PwdReset.vue';
 import store from '../store';
 
 const routes = [
   { path: '/', name: 'Home', component: Home },
   {
-    path: '/dashboard',
-    name: 'Dashboard',
-    component: Dashboard,
+    path: '/cards',
+    name: 'Cards',
+    component: Cards,
     meta: { requiresAuth: true }
   },
   { path: '/reset-pwd', name: 'PwdReset', component: PwdReset, meta: { blockWhenAuthenticated: true }}
