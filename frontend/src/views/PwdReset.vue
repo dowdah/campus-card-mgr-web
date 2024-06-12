@@ -12,38 +12,40 @@
       </div>
       <div class="form-group" v-if="reset_choice === 'student_id'">
         <label for="student_id">学号</label>
-        <input type="text" v-model="student_id" required />
+        <input type="text" v-model="student_id" required/>
       </div>
       <div class="form-group" v-if="reset_choice === 'email'">
         <label for="email">邮箱</label>
-        <input type="email" v-model="email" required />
+        <input type="email" v-model="email" required/>
       </div>
       <div class="form-group" v-if="reset_choice === 'none'">
         <p class="mock-message"><span class="mock-icon">🤣👍</span>我们抱歉地通知您，您失去了您的账号，永远地。</p>
       </div>
-      <button type="submit" class="email-button" v-if="reset_choice != 'none'" :disabled="isLoading">发送重置邮件</button>
+      <button type="submit" class="email-button" v-if="reset_choice != 'none'" :disabled="isLoading">发送重置邮件
+      </button>
     </form>
     <form v-else @submit.prevent="reset_pwd" class="reset-form">
-    <div class="form-group" v-if="reset_choice === 'student_id'">
+      <div class="form-group" v-if="reset_choice === 'student_id'">
         <label for="student_id">学号</label>
-        <input type="text" v-model="student_id" disabled />
+        <input type="text" v-model="student_id" disabled/>
       </div>
       <div class="form-group" v-if="reset_choice === 'email'">
         <label for="email">邮箱</label>
-        <input type="email" v-model="email" disabled />
+        <input type="email" v-model="email" disabled/>
       </div>
       <div class="form-group">
         <label for="verification_code">验证码</label>
-        <input type="text" v-model="token" required />
+        <input type="text" v-model="token" required/>
       </div>
       <div class="form-group">
         <label for="new_password">新密码</label>
-        <input type="password" v-model="password" required />
+        <input type="password" v-model="password" required/>
       </div>
       <button type="submit" class="email-button" :disabled="isLoading">重置密码</button>
     </form>
     <div v-if="email_sent" class="success-message"><span class="success-icon">✉️</span>重置邮件已发送，请查收。</div>
-    <div v-if="pwd_reset" class="success-message"><span class="success-icon">✅</span>密码已重置。{{ countdown }} 秒后跳转到主页。</div>
+    <div v-if="pwd_reset" class="success-message"><span class="success-icon">✅</span>密码已重置。{{ countdown }} 秒后跳转到主页。
+    </div>
     <div v-if="request_failed" class="error-message"><span class="error-icon">❎</span>{{ response_data.msg }}</div>
   </div>
 </template>
@@ -149,9 +151,10 @@ input:focus, select:focus {
 </style>
 
 <script>
-import { mapGetters, mapActions, mapState } from 'vuex';
-import { BASE_API_URL } from '@/config/constants';
+import {mapGetters, mapActions, mapState} from 'vuex';
+import {BASE_API_URL} from '@/config/constants';
 import axios from 'axios';
+
 export default {
   name: 'PwdReset',
   data() {
@@ -181,8 +184,8 @@ export default {
       }
     },
     identifier() {
-        return this.reset_choice === 'student_id' ? this.student_id : this.email;
-      }
+      return this.reset_choice === 'student_id' ? this.student_id : this.email;
+    }
   },
   methods: {
     ...mapActions(['resetPassword', 'setLoading']),
@@ -202,26 +205,25 @@ export default {
     },
     async reset_pwd() {
       try {
-          await this.resetPassword({
-      reset_choice: this.reset_choice,
-      identifier: this.identifier,
-      password: this.password,
-      token: this.token
-    });
-          this.request_failed = false;
-          this.pwd_reset = true;
-    const countdownInterval = setInterval(() => {
-      this.countdown--;
-      if (this.countdown === 0) {
-        clearInterval(countdownInterval);
-        this.$router.push('/');
+        await this.resetPassword({
+          reset_choice: this.reset_choice,
+          identifier: this.identifier,
+          password: this.password,
+          token: this.token
+        });
+        this.request_failed = false;
+        this.pwd_reset = true;
+        const countdownInterval = setInterval(() => {
+          this.countdown--;
+          if (this.countdown === 0) {
+            clearInterval(countdownInterval);
+            this.$router.push('/');
+          }
+        }, 1000);
+      } catch (error) {
+        this.request_failed = true;
+        this.response_data = error.response.data;
       }
-    }, 1000);
-        }
-        catch (error) {
-          this.request_failed = true;
-          this.response_data = error.response.data;
-        }
     }
   }
 };

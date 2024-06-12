@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="login-container">
-      <h2>登陆</h2>
+      <h2>登录</h2>
       <!-- 登录表单，阻止默认提交行为 -->
       <form @submit.prevent="loginHandler" class="login-form">
         <!-- 登录方式选择 -->
@@ -15,16 +15,16 @@
         <!-- 根据选择的登录方式显示对应输入框 -->
         <div class="form-group" v-if="login_choice === 'student_id'">
           <label for="student_id">学号</label>
-          <input type="text" v-model="student_id" required />
+          <input type="text" v-model="student_id" required/>
         </div>
         <div class="form-group" v-if="login_choice === 'email'">
           <label for="email">邮箱</label>
-          <input type="email" v-model="email" required />
+          <input type="email" v-model="email" required/>
         </div>
         <!-- 密码输入框 -->
         <div class="form-group">
           <label for="password">密码</label>
-          <input type="password" v-model="password" required />
+          <input type="password" v-model="password" required/>
         </div>
         <!-- 提交按钮 -->
         <button type="submit" class="login-button" :disabled="isLoading">确认</button>
@@ -130,7 +130,7 @@ input:focus, select:focus {
 </style>
 
 <script>
-import { mapActions, mapState } from 'vuex';
+import {mapActions, mapState} from 'vuex';
 
 export default {
   name: 'Login',
@@ -149,8 +149,8 @@ export default {
     credentials() {
       // 根据登录方式返回相应的凭证信息
       return this.login_choice === 'student_id'
-        ? { student_id: this.student_id, password: this.password }
-        : { email: this.email, password: this.password };
+          ? {student_id: this.student_id, password: this.password}
+          : {email: this.email, password: this.password};
     }
   },
   methods: {
