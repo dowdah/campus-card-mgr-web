@@ -60,7 +60,7 @@
           </div>
         </div>
       </div>
-      <button @click="logoutHandler" class="logout-button">登出</button>
+      <button @click="logoutHandler" class="logout-button" :disabled="loading">登出</button>
       </template>
     </div>
   </div>
@@ -150,8 +150,14 @@ h2 {
   align-self: stretch;
 }
 
-.logout-button:hover {
+.login-button:not(:disabled):hover {
   background-color: #0056b3;
+}
+
+.login-button:disabled {
+  background-color: #ccc;
+  color: #666;
+  cursor: default;
 }
 </style>
 <script>
