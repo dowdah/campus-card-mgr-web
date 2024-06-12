@@ -22,7 +22,9 @@
           </div>
         </div>
         <div class="card-info">
-          <h2>拥有的一卡通</h2>
+          <h2 class="sub-heading">
+            <router-link to="/cards">拥有的一卡通</router-link>
+          </h2>
           <div class="info-table">
             <div class="info-row header">
               <div class="info-cell">卡号</div>
@@ -39,7 +41,9 @@
               <div class="info-cell">{{ card.expires_at }}</div>
             </div>
           </div>
-          <h2>最近的交易</h2>
+          <h2 class="sub-heading">
+            <router-link to="/transactions">最近的交易</router-link>
+          </h2>
           <div class="info-table">
             <div class="info-row header">
               <div class="info-cell">时间</div>
@@ -149,14 +153,18 @@ h2 {
   align-self: stretch;
 }
 
-.login-button:not(:disabled):hover {
+.logout-button:not(:disabled):hover {
   background-color: #0056b3;
 }
 
-.login-button:disabled {
+.logout-button:disabled {
   background-color: #ccc;
   color: #666;
   cursor: default;
+}
+
+.sub-heading a {
+  color: #333333;
 }
 </style>
 <script>
