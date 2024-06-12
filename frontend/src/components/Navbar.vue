@@ -26,11 +26,12 @@ export default {
 nav {
   background-color: #1f1f1f;
   color: white;
+  top:0;
+  left:0;
   padding: 0.5em 1em;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: fixed;
   width: 100%;
-  top: 0;
   z-index: 1000;
 }
 

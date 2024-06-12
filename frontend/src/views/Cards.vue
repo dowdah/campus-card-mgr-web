@@ -10,7 +10,7 @@
     </transition>
   <h4>我的一卡通及交易</h4>
   <div class="cards">
-    <div v-if="loading" class="alert alert-info">加载中...</div>
+    <div v-if="isLoading" class="alert alert-info">加载中...</div>
     <div v-else-if="error" class="alert alert-danger">{{ error.message }}</div>
     <div v-else>
       <div v-for="(card, index) in cards" :key="index" class="card">
@@ -87,7 +87,7 @@
 
 <script>
 import CardInfo from '../components/CardInfo.vue';
-import { mapGetters, mapActions } from 'vuex';
+import { mapGetters, mapActions, mapState } from 'vuex';
 import { BASE_API_URL } from '@/config/constants';
 import axios from 'axios';
 export default {
@@ -104,9 +104,13 @@ export default {
       lostCard: 0
     };
   },
+  computed: {
+    ...mapState(['isLoading'])
+  },
   methods: {
+    ...mapActions(['setLoading']),
     async fetchCards() {
-      this.loading = true;
+      this.setLoading(true)
       try {
         const response = await axios.get(`${BASE_API_URL}/card/my`);
         this.cards = response.data.cards;
@@ -114,7 +118,7 @@ export default {
       } catch (error) {
         this.error = error.response.data;
       } finally {
-        this.loading = false;
+        this.setLoading(false)
       }
     },
     async reportLost(cardId) {
