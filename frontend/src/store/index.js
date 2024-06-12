@@ -27,6 +27,7 @@ const store = createStore({
     actions: {
         async login({ commit }, credentials) {
             console.log('Login action called with credentials:', credentials);
+            commit('setLoading', true);
             try {
                 const response = await axios.post(`${BASE_API_URL}/auth/login`, credentials);
                 if (response.data.success) {
@@ -40,13 +41,16 @@ const store = createStore({
             } catch (error) {
                 console.error('Login error:', error);
                 throw error;
-                }
+                } finally {
+                commit('setLoading', false);
+            }
             },
         async logout({ commit }) {
+            commit('setLoading', true);
             localStorage.removeItem('token');
             delete axios.defaults.headers.common['Authorization'];
             commit('clearUser');
-            commit('setInitialized', false); // 重置初始化状态
+            commit('setLoading', false);
         },
         async init({ commit, state }) {
             const token = localStorage.getItem('token');
@@ -72,6 +76,7 @@ const store = createStore({
             }
         },
         async resetPassword({ commit }, payload) {
+            commit('setLoading', true);
             const { reset_choice, identifier, password, token } = payload;
             let data = { password };
             if (reset_choice === 'email') { data.email = identifier; }
@@ -87,6 +92,8 @@ const store = createStore({
             } catch (error) {
                 console.error('Reset password error:', error);
                 throw error;
+            } finally {
+                commit('setLoading', false);
             }
         },
             setLoading({ commit }, isLoading) {
