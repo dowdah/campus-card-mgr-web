@@ -96,12 +96,6 @@ h2 {
   color: #333333;
 }
 
-.info-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
 .userinfo-row {
   display: flex;
   justify-content: space-between;
