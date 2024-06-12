@@ -1,13 +1,13 @@
 <template>
   <transition name="v">
-  <div v-if="showWindow" class="modal">
-  <div class="modal-content">
-    <p>确定要报告此卡(卡号: {{ lostCard }})丢失吗？</p>
-    <button @click="confirmReportLost" class="modal-button">确定</button>
-    <button @click="cancelReportLost" class="modal-button">取消</button>
-  </div>
-</div>
-    </transition>
+    <div v-if="showWindow" class="modal">
+      <div class="modal-content">
+        <p>确定要报告此卡(卡号: {{ lostCard }})丢失吗？</p>
+        <button @click="confirmReportLost" class="modal-button">确定</button>
+        <button @click="cancelReportLost" class="modal-button">取消</button>
+      </div>
+    </div>
+  </transition>
   <h4>我的一卡通及交易</h4>
   <div class="cards">
     <div v-if="isLoading" class="alert alert-info">加载中...</div>
@@ -19,22 +19,22 @@
                   @reportLost="reportLost"
         ></CardInfo>
       </div>
-  </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .cards {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    padding: 20px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    align-items: stretch;
-    max-width: 700px;
-    margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  align-items: stretch;
+  max-width: 700px;
+  margin: 0 auto;
 }
 
 .modal {
@@ -87,12 +87,13 @@
 
 <script>
 import CardInfo from '../components/CardInfo.vue';
-import { mapGetters, mapActions, mapState } from 'vuex';
-import { BASE_API_URL } from '@/config/constants';
+import {mapGetters, mapActions, mapState} from 'vuex';
+import {BASE_API_URL} from '@/config/constants';
 import axios from 'axios';
+
 export default {
   name: 'Cards',
-  components: { CardInfo },
+  components: {CardInfo},
   data() {
     return {
       cards: [],
@@ -122,19 +123,22 @@ export default {
       }
     },
     async reportLost(cardId) {
-      if (this.confirmLost){
-      try {
-        await axios.get(`${BASE_API_URL}/card/my/lost/${cardId}`);
-        this.error = null;
-        this.fetchCards();
-      } catch (error) {
-        this.error = error.response.data;
-      } finally {
-        this.showWindow = false;
-        this.confirmLost = false;
+      if (this.confirmLost) {
+        try {
+          await axios.get(`${BASE_API_URL}/card/my/lost/${cardId}`);
+          this.error = null;
+          this.fetchCards();
+        } catch (error) {
+          this.error = error.response.data;
+        } finally {
+          this.showWindow = false;
+          this.confirmLost = false;
+        }
+      } else {
+        this.showWindow = true;
+        this.lostCard = cardId
       }
-      } else { this.showWindow = true; this.lostCard = cardId }
-      },
+    },
     async toggleCardDetails(cardId) {
       if (this.collapsedCardIds.includes(cardId)) {
         this.collapsedCardIds = this.collapsedCardIds.filter(id => id !== cardId);
@@ -143,15 +147,15 @@ export default {
       }
     },
     confirmReportLost() {
-  this.confirmLost = true;
-  this.reportLost(this.lostCard);
-  this.lostCard = 0
-},
-cancelReportLost() {
-  this.showWindow = false;
-  this.confirmLost = false;
-  this.lostCard = 0
-}
+      this.confirmLost = true;
+      this.reportLost(this.lostCard);
+      this.lostCard = 0
+    },
+    cancelReportLost() {
+      this.showWindow = false;
+      this.confirmLost = false;
+      this.lostCard = 0
+    }
   },
   created() {
     this.fetchCards();

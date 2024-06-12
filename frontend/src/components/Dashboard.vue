@@ -2,64 +2,64 @@
   <div>
     <div class="dashboard">
       <template v-if="user">
-      <div class="user-info">
-        <h2>用户信息</h2>
-        <div class="userinfo-row">
-          <div class="info-label">姓名</div>
-          <div class="info-value">{{ user.name }}</div>
-        </div>
-        <div class="userinfo-row">
-          <div class="info-label">学号</div>
-          <div class="info-value">{{ user.student_id }}</div>
-        </div>
-        <div class="userinfo-row">
-          <div class="info-label">邮箱</div>
-          <div class="info-value">{{ user.email }}</div>
-        </div>
-        <div class="userinfo-row">
-          <div class="info-label">身份</div>
-          <div class="info-value">{{ user.role }}</div>
-        </div>
-      </div>
-          <div class="card-info">
-        <h2>拥有的一卡通</h2>
-        <div class="info-table">
-          <div class="info-row header">
-            <div class="info-cell">卡号</div>
-            <div class="info-cell">余额</div>
-            <div class="info-cell">状态</div>
-            <div class="info-cell">创建时间</div>
-            <div class="info-cell">过期时间</div>
+        <div class="user-info">
+          <h2>用户信息</h2>
+          <div class="userinfo-row">
+            <div class="info-label">姓名</div>
+            <div class="info-value">{{ user.name }}</div>
           </div>
-          <div v-for="(card, index) in user.cards" :key="index" class="info-row">
-            <div class="info-cell">{{ card.id }}</div>
-            <div class="info-cell">{{ card.balance }} ¥</div>
-            <div class="info-cell">{{ card.status }}</div>
-            <div class="info-cell">{{ card.created_at }}</div>
-            <div class="info-cell">{{ card.expires_at }}</div>
+          <div class="userinfo-row">
+            <div class="info-label">学号</div>
+            <div class="info-value">{{ user.student_id }}</div>
+          </div>
+          <div class="userinfo-row">
+            <div class="info-label">邮箱</div>
+            <div class="info-value">{{ user.email }}</div>
+          </div>
+          <div class="userinfo-row">
+            <div class="info-label">身份</div>
+            <div class="info-value">{{ user.role }}</div>
           </div>
         </div>
-                  <h2>最近的交易</h2>
-        <div class="info-table">
-          <div class="info-row header">
-            <div class="info-cell">时间</div>
-            <div class="info-cell">卡号</div>
-            <div class="info-cell">交易金额</div>
-            <div class="info-cell">原金额</div>
-            <div class="info-cell">新金额</div>
-            <div class="info-cell">交易状态</div>
+        <div class="card-info">
+          <h2>拥有的一卡通</h2>
+          <div class="info-table">
+            <div class="info-row header">
+              <div class="info-cell">卡号</div>
+              <div class="info-cell">余额</div>
+              <div class="info-cell">状态</div>
+              <div class="info-cell">创建时间</div>
+              <div class="info-cell">过期时间</div>
+            </div>
+            <div v-for="(card, index) in user.cards" :key="index" class="info-row">
+              <div class="info-cell">{{ card.id }}</div>
+              <div class="info-cell">{{ card.balance }} ¥</div>
+              <div class="info-cell">{{ card.status }}</div>
+              <div class="info-cell">{{ card.created_at }}</div>
+              <div class="info-cell">{{ card.expires_at }}</div>
+            </div>
           </div>
-          <div v-for="(transaction, index) in user.latest_transactions" :key="index" class="info-row">
-            <div class="info-cell">{{ transaction.created_at }}</div>
-            <div class="info-cell">{{ transaction.card_id }}</div>
-            <div class="info-cell">{{ transaction.amount }} ¥</div>
-            <div class="info-cell">{{ transaction.original_balance }} ¥</div>
-            <div class="info-cell">{{ transaction.current_balance }} ¥</div>
-            <div class="info-cell">{{ transaction.is_canceled ? "已取消":"正常" }}</div>
+          <h2>最近的交易</h2>
+          <div class="info-table">
+            <div class="info-row header">
+              <div class="info-cell">时间</div>
+              <div class="info-cell">卡号</div>
+              <div class="info-cell">交易金额</div>
+              <div class="info-cell">原金额</div>
+              <div class="info-cell">新金额</div>
+              <div class="info-cell">交易状态</div>
+            </div>
+            <div v-for="(transaction, index) in user.latest_transactions" :key="index" class="info-row">
+              <div class="info-cell">{{ transaction.created_at }}</div>
+              <div class="info-cell">{{ transaction.card_id }}</div>
+              <div class="info-cell">{{ transaction.amount }} ¥</div>
+              <div class="info-cell">{{ transaction.original_balance }} ¥</div>
+              <div class="info-cell">{{ transaction.current_balance }} ¥</div>
+              <div class="info-cell">{{ transaction.is_canceled ? "已取消" : "正常" }}</div>
+            </div>
           </div>
         </div>
-      </div>
-      <button @click="logoutHandler" class="logout-button" :disabled="isLoading">登出</button>
+        <button @click="logoutHandler" class="logout-button" :disabled="isLoading">登出</button>
       </template>
     </div>
   </div>
@@ -160,7 +160,8 @@ h2 {
 }
 </style>
 <script>
-import { mapGetters, mapActions, mapState } from 'vuex';
+import {mapGetters, mapActions, mapState} from 'vuex';
+
 export default {
   name: 'Dashboard',
   computed: {
@@ -174,7 +175,7 @@ export default {
     ...mapActions(['logout', 'setLoading']),
     logoutHandler() {
       this.logout().then(() => {
-        this.$router.push({ name: 'Home' });
+        this.$router.push({name: 'Home'});
       });
     }
   }

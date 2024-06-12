@@ -1,5 +1,5 @@
-import { createStore } from 'vuex';
-import { BASE_API_URL } from '@/config/constants';
+import {createStore} from 'vuex';
+import {BASE_API_URL} from '@/config/constants';
 import axios from 'axios';
 
 const store = createStore({
@@ -20,12 +20,12 @@ const store = createStore({
         clearUser(state) {
             state.user = null;
         },
-            setLoading(state, isLoading) {
-      state.isLoading = isLoading;
-    }
+        setLoading(state, isLoading) {
+            state.isLoading = isLoading;
+        }
     },
     actions: {
-        async login({ commit }, credentials) {
+        async login({commit}, credentials) {
             console.log('Login action called with credentials:', credentials);
             commit('setLoading', true);
             try {
@@ -41,18 +41,18 @@ const store = createStore({
             } catch (error) {
                 console.error('Login error:', error);
                 throw error;
-                } finally {
+            } finally {
                 commit('setLoading', false);
             }
-            },
-        async logout({ commit }) {
+        },
+        async logout({commit}) {
             commit('setLoading', true);
             localStorage.removeItem('token');
             delete axios.defaults.headers.common['Authorization'];
             commit('clearUser');
             commit('setLoading', false);
         },
-        async init({ commit, state }) {
+        async init({commit, state}) {
             // 当加载时间超过 500ms 时，显式加载。
             let setLoadingCalled = false;
             const timer = setTimeout(() => {
@@ -66,7 +66,7 @@ const store = createStore({
                 try {
                     const response = await axios.get(`${BASE_API_URL}/auth/me`);
                     commit('setUser', response.data.user);
-                    if(response.data.token){
+                    if (response.data.token) {
                         // 如果后端返回了新的token，更新本地存储的token，并设置axios的默认请求头
                         // 后端是否返回新token，取决于 auth.py 中 ALLOW_TOKEN_REFRESH 的设置
                         localStorage.setItem('token', response.data.token);
@@ -87,12 +87,15 @@ const store = createStore({
                 commit('setLoading', false);
             }
         },
-        async resetPassword({ commit }, payload) {
+        async resetPassword({commit}, payload) {
             commit('setLoading', true);
-            const { reset_choice, identifier, password, token } = payload;
-            let data = { password };
-            if (reset_choice === 'email') { data.email = identifier; }
-            else if (reset_choice === 'student_id') { data.student_id = identifier; }
+            const {reset_choice, identifier, password, token} = payload;
+            let data = {password};
+            if (reset_choice === 'email') {
+                data.email = identifier;
+            } else if (reset_choice === 'student_id') {
+                data.student_id = identifier;
+            }
             try {
                 console.log('Reset password data:', data);
                 console.log('Reset password token:', token);
@@ -108,9 +111,9 @@ const store = createStore({
                 commit('setLoading', false);
             }
         },
-            setLoading({ commit }, isLoading) {
-      commit('setLoading', isLoading);
-    }
+        setLoading({commit}, isLoading) {
+            commit('setLoading', isLoading);
+        }
     },
     getters: {
         isAuthenticated: state => !!state.user

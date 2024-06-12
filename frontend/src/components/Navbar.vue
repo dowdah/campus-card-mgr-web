@@ -1,19 +1,26 @@
 <template>
   <nav>
     <ul>
-      <li><router-link to="/">主页</router-link></li>
+      <li>
+        <router-link to="/">主页</router-link>
+      </li>
       <template v-if="!isAuthenticated">
-      <li><router-link to="/reset-pwd">忘记密码</router-link></li>
+        <li>
+          <router-link to="/reset-pwd">忘记密码</router-link>
+        </li>
       </template>
       <template v-if="isAuthenticated">
-      <li><router-link to="/cards">我的一卡通</router-link></li>
+        <li>
+          <router-link to="/cards">我的一卡通</router-link>
+        </li>
       </template>
     </ul>
   </nav>
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
+import {mapGetters} from 'vuex';
+
 export default {
   name: 'Navbar',
   computed: {
@@ -26,8 +33,8 @@ export default {
 nav {
   background-color: #1f1f1f;
   color: white;
-  top:0;
-  left:0;
+  top: 0;
+  left: 0;
   padding: 0.5em 1em;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: fixed;
