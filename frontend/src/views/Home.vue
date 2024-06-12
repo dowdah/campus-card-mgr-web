@@ -6,7 +6,7 @@
 <script>
 import Dashboard from '../components/Dashboard.vue';
 import Login from '../components/Login.vue';
-import {mapGetters, mapActions} from 'vuex';
+import {mapGetters} from 'vuex';
 
 export default {
   name: 'Home',
