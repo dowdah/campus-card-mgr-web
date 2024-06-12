@@ -154,16 +154,13 @@ export default {
     }
   },
   methods: {
-    ...mapActions(['login', 'setLoading']),
+    ...mapActions(['login']),
     async loginHandler() {
-      this.setLoading(true);
       try {
         await this.login(this.credentials);
       } catch (error) {
         this.failed_login = true;
         this.failed_response_data = error.response.data;
-      } finally {
-        this.setLoading(false);
       }
     }
   }

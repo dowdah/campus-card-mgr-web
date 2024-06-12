@@ -173,9 +173,7 @@ export default {
   methods: {
     ...mapActions(['logout', 'setLoading']),
     logoutHandler() {
-      this.setLoading(true);
       this.logout().then(() => {
-        this.setLoading(false);
         this.$router.push({ name: 'Home' });
       });
     }

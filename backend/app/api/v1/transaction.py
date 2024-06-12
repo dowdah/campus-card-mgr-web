@@ -14,7 +14,7 @@ def get_transactions():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     if request.method == 'GET':
-        pagination = Transaction.query.order_by(Transaction.created_at.desc()).paginate(
+        pagination = Transaction.query.order_by(Transaction.id.desc()).paginate(
             page=page, per_page=per_page, error_out=False)
         transactions = pagination.items
     elif request.method == 'POST':
@@ -25,7 +25,7 @@ def get_transactions():
                 'msg': 'No data provided'
             }
             return jsonify(response_json), response_json['code']
-        query = Transaction.query.order_by(Transaction.created_at.desc())
+        query = Transaction.query.order_by(Transaction.id.desc())
         try:
             for k, v in g.data.items():
                 query = query.filter(getattr(Transaction, k) == v)

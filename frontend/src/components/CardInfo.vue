@@ -36,9 +36,9 @@
           <div class="page-size-selector">
             <label for="itemsPerPage">每页显示:</label>
             <select v-model="itemsPerPage">
-              <option value="2">2</option>
               <option value="5">5</option>
               <option value="10">10</option>
+              <option value="15">15</option>
             </select>
           </div>
             </div>
@@ -48,7 +48,7 @@
             <tr>
               <th>交易ID</th>
               <th>金额</th>
-              <th>创建时间</th>
+              <th>时间</th>
               <th>交易前余额</th>
               <th>交易后余额</th>
               <th>状态</th>
@@ -205,7 +205,7 @@ export default {
   data() {
     return {
       currentPage: 1,
-      itemsPerPage: 2,
+      itemsPerPage: 10,
       responseData: {},
       fetchedTransactions: false,
       fetchedFailed: false

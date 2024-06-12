@@ -15,7 +15,7 @@ def get_cards():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     if request.method == 'GET':
-        pagination = Card.query.order_by(Card.created_at.desc()).paginate(
+        pagination = Card.query.order_by(Card.id.desc()).paginate(
             page=page, per_page=per_page, error_out=False)
         cards = pagination.items
     elif request.method == 'POST':
@@ -26,7 +26,7 @@ def get_cards():
                 'msg': 'No data provided'
             }
             return jsonify(response_json), response_json['code']
-        query = Card.query.order_by(Card.created_at.desc())
+        query = Card.query.order_by(Card.id.desc())
         try:
             for k, v in g.data.items():
                 query = query.filter(getattr(Card, k) == v)
@@ -204,7 +204,7 @@ def create_card(id):
             'success': True,
             'code': 200,
             'msg': 'Card created successfully',
-            'card': Card.query.filter_by(user=user).order_by(Card.created_at.desc()).first().to_json()
+            'card': Card.query.filter_by(user=user).order_by(Card.id.desc()).first().to_json()
         }
     else:
         response_json = {

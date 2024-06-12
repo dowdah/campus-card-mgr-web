@@ -27,6 +27,7 @@ const store = createStore({
     actions: {
         async login({ commit }, credentials) {
             console.log('Login action called with credentials:', credentials);
+            commit('setLoading', true);
             try {
                 const response = await axios.post(`${BASE_API_URL}/auth/login`, credentials);
                 if (response.data.success) {
@@ -40,15 +41,24 @@ const store = createStore({
             } catch (error) {
                 console.error('Login error:', error);
                 throw error;
-                }
+                } finally {
+                commit('setLoading', false);
+            }
             },
         async logout({ commit }) {
+            commit('setLoading', true);
             localStorage.removeItem('token');
             delete axios.defaults.headers.common['Authorization'];
             commit('clearUser');
-            commit('setInitialized', false); // 重置初始化状态
+            commit('setLoading', false);
         },
         async init({ commit, state }) {
+            // 当加载时间超过 500ms 时，显式加载。
+            let setLoadingCalled = false;
+            const timer = setTimeout(() => {
+                setLoadingCalled = true;
+                commit('setLoading', true);
+            }, 500);
             const token = localStorage.getItem('token');
             console.log('Init action called with token:', token)
             if (token) {
@@ -70,8 +80,15 @@ const store = createStore({
                     commit('clearUser');
                 }
             }
+            // 如果加载时间未超过 500ms，取消计时器。若计时器已触发，取消加载状态。
+            if (!setLoadingCalled) {
+                clearTimeout(timer);
+            } else {
+                commit('setLoading', false);
+            }
         },
         async resetPassword({ commit }, payload) {
+            commit('setLoading', true);
             const { reset_choice, identifier, password, token } = payload;
             let data = { password };
             if (reset_choice === 'email') { data.email = identifier; }
@@ -87,6 +104,8 @@ const store = createStore({
             } catch (error) {
                 console.error('Reset password error:', error);
                 throw error;
+            } finally {
+                commit('setLoading', false);
             }
         },
             setLoading({ commit }, isLoading) {

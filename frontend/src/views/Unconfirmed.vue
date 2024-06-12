@@ -14,9 +14,9 @@
         <label for="verification_code">验证码</label>
         <input type="text" v-model="token" required />
       </div>
-      <button @click="sendEmail" class="email-button" v-if="!emailSent" type="button">发送验证码</button>
-      <button type="submit" class="submit-button" v-else>提交</button>
-      <button class="logout-button" @click="logoutHandler" type="button">登出</button>
+      <button @click="sendEmail" class="email-button" v-if="!emailSent" type="button" :disabled="isLoading">发送验证码</button>
+      <button type="submit" class="submit-button" v-else :disabled="isLoading">提交</button>
+      <button class="logout-button" @click="logoutHandler" type="button" :disabled="isLoading">登出</button>
     </form>
     <div v-if="emailSent" class="success-message"><span class="success-icon">✉️</span>验证码邮件已发送，请查收。</div>
     <div v-if="emailConfirmed" class="success-message"><span class="success-icon">✅</span>邮箱已确认。{{ countdown }} 秒后页面跳转。</div>
@@ -134,7 +134,7 @@ input:focus, select:focus {
 </style>
 
 <script>
-import { mapGetters, mapActions } from 'vuex';
+import { mapGetters, mapActions, mapState } from 'vuex';
 import { BASE_API_URL } from '@/config/constants';
 import axios from 'axios';
 export default {
@@ -152,16 +152,18 @@ export default {
     };
   },
   computed: {
-    ...mapGetters(['isAuthenticated'])
+    ...mapGetters(['isAuthenticated']),
+    ...mapState(['isLoading'])
   },
   methods: {
-    ...mapActions(['logout']),
+    ...mapActions(['logout', 'setLoading']),
     logoutHandler() {
       this.logout().then(() => {
         this.$router.push({ name: 'Home' });
       });
     },
     sendEmail() {
+      this.setLoading(true)
       axios.get(`${BASE_API_URL}/auth/send-confirmation`)
         .then(() => {
           this.emailSent = true;
@@ -169,9 +171,13 @@ export default {
         .catch(err => {
           this.requestFailed = true;
           this.responseData = err.response.data;
+        })
+        .finally(() => {
+          this.setLoading(false);
         });
     },
     confirmEmail() {
+      this.setLoading(true)
       axios.get(`${BASE_API_URL}/auth/confirm/${this.token}`)
         .then(() => {
           this.emailConfirmed = true;
@@ -187,6 +193,9 @@ export default {
         .catch(err => {
           this.requestFailed = true;
           this.responseData = err.response.data;
+        })
+        .finally(() => {
+          this.setLoading(false);
         });
     }
   }

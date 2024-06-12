@@ -21,7 +21,7 @@
       <div class="form-group" v-if="reset_choice === 'none'">
         <p class="mock-message"><span class="mock-icon">🤣👍</span>我们抱歉地通知您，您失去了您的账号，永远地。</p>
       </div>
-      <button type="submit" class="email-button" v-if="reset_choice != 'none'">发送重置邮件</button>
+      <button type="submit" class="email-button" v-if="reset_choice != 'none'" :disabled="isLoading">发送重置邮件</button>
     </form>
     <form v-else @submit.prevent="reset_pwd" class="reset-form">
     <div class="form-group" v-if="reset_choice === 'student_id'">
@@ -40,7 +40,7 @@
         <label for="new_password">新密码</label>
         <input type="password" v-model="password" required />
       </div>
-      <button type="submit" class="email-button">重置密码</button>
+      <button type="submit" class="email-button" :disabled="isLoading">重置密码</button>
     </form>
     <div v-if="email_sent" class="success-message"><span class="success-icon">✉️</span>重置邮件已发送，请查收。</div>
     <div v-if="pwd_reset" class="success-message"><span class="success-icon">✅</span>密码已重置。{{ countdown }} 秒后跳转到主页。</div>
@@ -149,7 +149,7 @@ input:focus, select:focus {
 </style>
 
 <script>
-import { mapGetters, mapActions } from 'vuex';
+import { mapGetters, mapActions, mapState } from 'vuex';
 import { BASE_API_URL } from '@/config/constants';
 import axios from 'axios';
 export default {
@@ -170,6 +170,7 @@ export default {
   },
   computed: {
     ...mapGetters(['isAuthenticated']),
+    ...mapState(['isLoading']),
     request_email_url() {
       if (this.reset_choice === 'student_id') {
         return `${BASE_API_URL}/auth/reset-password?student_id=${this.student_id}`;
@@ -184,9 +185,10 @@ export default {
       }
   },
   methods: {
-    ...mapActions(['resetPassword']),
+    ...mapActions(['resetPassword', 'setLoading']),
     async request_email() {
       try {
+        this.setLoading(true)
         const response = await axios.get(this.request_email_url);
         this.response_data = response.data;
         this.email_sent = true;
@@ -194,6 +196,8 @@ export default {
       } catch (error) {
         this.request_failed = true;
         this.response_data = error.response.data;
+      } finally {
+        this.setLoading(false)
       }
     },
     async reset_pwd() {
