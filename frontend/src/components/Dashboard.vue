@@ -160,16 +160,12 @@ h2 {
 }
 </style>
 <script>
-import {mapGetters, mapActions, mapState} from 'vuex';
+import {mapActions, mapState} from 'vuex';
 
 export default {
   name: 'Dashboard',
   computed: {
-    ...mapGetters(['isAuthenticated']),
-    ...mapState(['isLoading']),
-    user() {
-      return this.$store.state.user;
-    }
+    ...mapState(['isLoading', 'user']),
   },
   methods: {
     ...mapActions(['logout', 'setLoading']),
