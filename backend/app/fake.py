@@ -4,6 +4,7 @@ from faker import Faker
 from . import db
 from .models import User, Card, Role
 from time import sleep
+from alive_progress import alive_bar
 
 
 def users(count=20):
@@ -47,11 +48,12 @@ def cards():
 def transactions():
     fake = Faker()
     card_list = Card.query.all()
-    for card in card_list:
-        for i in range(0, randint(1, 3)):
-            offset = randint(-card.balance, 100)
-            card.balance += offset
-            sleep(1)
+    with alive_bar(len(card_list)) as bar:
+        for card in card_list:
+            for i in range(0, randint(14, 40)):
+                offset = randint(-card.balance, 100)
+                card.balance += offset
+            bar()
 
 
 def main():
@@ -60,10 +62,13 @@ def main():
     Role.insert_roles()
     school_staff = Role.query.filter_by(name='SchoolStaff').first()
     site_operator = Role.query.filter_by(name='SiteOperator').first()
+    user = Role.query.filter_by(name='User').first()
     u_1 = User(email='x@dowdah.com', name='张天宇', student_id=2300160426, password='666666', confirmed=True, role=site_operator)
     db.session.add(u_1)
     u_2 = User(email='1534887783@qq.com', name='乔', student_id=2300114514, password='666666', confirmed=True, role=school_staff)
     db.session.add(u_2)
+    u_unconfirmed = User(email='1411601882@qq.com', name='张天宇', student_id=2300160427, password='666666', confirmed=False, role=user)
+    db.session.add(u_unconfirmed)
     db.session.commit()
     u_1.create_card()
     u_2.create_card()

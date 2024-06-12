@@ -219,16 +219,16 @@ class User(db.Model):
 
     @property
     def card_list(self):
-        return self.cards.order_by(Card.created_at.desc()).all()
+        return self.cards.order_by(Card.id.desc()).all()
 
     @property
     def all_transaction_list(self):
-        return self.transactions.order_by(Transaction.created_at.desc()).all()
+        return self.transactions.order_by(Transaction.id.desc()).all()
 
     @property
     def latest_transaction_list(self):
         # 因为动张记录可能会很多，所以只返回最新的5条
-        return self.transactions.order_by(Transaction.created_at.desc()).limit(5).all()
+        return self.transactions.order_by(Transaction.id.desc()).limit(5).all()
 
     def create_card(self):
         card = Card(user=self)
@@ -363,12 +363,12 @@ class Card(db.Model):
 
     @property
     def all_transaction_list(self):
-        return self.transactions.order_by(Transaction.created_at.desc()).all()
+        return self.transactions.order_by(Transaction.id.desc()).all()
 
     @property
     def latest_transaction_list(self):
         # 因为动账记录可能会很多，所以只返回最新的5条
-        return self.transactions.order_by(Transaction.created_at.desc()).limit(5).all()
+        return self.transactions.order_by(Transaction.id.desc()).limit(5).all()
 
     def to_json(self, include_related=True):
         json_card = {

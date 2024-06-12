@@ -1,5 +1,5 @@
 <template>
-<Dashboard v-if="isAuthenticated"></Dashboard>
+  <Dashboard v-if="isAuthenticated"></Dashboard>
   <Login v-else></Login>
 </template>
 

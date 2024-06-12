@@ -15,7 +15,7 @@ def get_reports():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     if request.method == 'GET':
-        pagination = FinancialReport.query.order_by(FinancialReport.created_at.desc()).paginate(
+        pagination = FinancialReport.query.order_by(FinancialReport.id.desc()).paginate(
             page=page, per_page=per_page, error_out=False)
         reports = pagination.items
     elif request.method == 'POST':
@@ -26,7 +26,7 @@ def get_reports():
                 'msg': 'No data provided'
             }
             return jsonify(response_json), response_json['code']
-        query = FinancialReport.query.order_by(FinancialReport.created_at.desc())
+        query = FinancialReport.query.order_by(FinancialReport.id.desc())
         try:
             for k, v in g.data.items():
                 query = query.filter(getattr(FinancialReport, k) == v)

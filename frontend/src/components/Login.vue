@@ -1,32 +1,41 @@
 <template>
-  <div class="login-container">
-    <h2>登录</h2>
-    <form @submit.prevent="loginHandler" class="login-form">
-      <div class="form-group">
-        <label for="login_choice">登录方式</label>
-        <select v-model="login_choice" required>
-          <option value="student_id">学号</option>
-          <option value="email">邮箱</option>
-        </select>
+  <div>
+    <div class="login-container">
+      <h2>登陆</h2>
+      <!-- 登录表单，阻止默认提交行为 -->
+      <form @submit.prevent="loginHandler" class="login-form">
+        <!-- 登录方式选择 -->
+        <div class="form-group">
+          <label for="login_choice">登录方式</label>
+          <select v-model="login_choice" required>
+            <option value="student_id">学号</option>
+            <option value="email">邮箱</option>
+          </select>
+        </div>
+        <!-- 根据选择的登录方式显示对应输入框 -->
+        <div class="form-group" v-if="login_choice === 'student_id'">
+          <label for="student_id">学号</label>
+          <input type="text" v-model="student_id" required />
+        </div>
+        <div class="form-group" v-if="login_choice === 'email'">
+          <label for="email">邮箱</label>
+          <input type="email" v-model="email" required />
+        </div>
+        <!-- 密码输入框 -->
+        <div class="form-group">
+          <label for="password">密码</label>
+          <input type="password" v-model="password" required />
+        </div>
+        <!-- 提交按钮 -->
+        <button type="submit" class="login-button" :disabled="isLoading">确认</button>
+      </form>
+      <!-- 登录失败信息显示 -->
+      <div v-if="failed_login" class="error-message">
+        <span class="error-icon">❎</span>{{ failed_response_data.msg }}
+        <template v-if="failed_response_data.code === 401">
+          <RouterLink to="/reset-pwd">忘记密码？</RouterLink>
+        </template>
       </div>
-      <div class="form-group" v-if="login_choice === 'student_id'">
-        <label for="student_id">学号</label>
-        <input type="text" v-model="student_id" required />
-      </div>
-      <div class="form-group" v-if="login_choice === 'email'">
-        <label for="email">邮箱</label>
-        <input type="email" v-model="email" required />
-      </div>
-      <div class="form-group">
-        <label for="password">密码</label>
-        <input type="password" v-model="password" required />
-      </div>
-      <button type="submit" class="login-button">确定</button>
-    </form>
-    <div v-if="failed_login" class="error-message"><span class="error-icon">❎</span>{{ failed_response_data.msg }}
-    <template v-if="failed_response_data.code==401">
-      <RouterLink to="/reset-pwd">忘记密码？</RouterLink>
-      </template>
     </div>
   </div>
 </template>
@@ -34,7 +43,7 @@
 <style scoped>
 .login-container {
   max-width: 400px;
-  margin: 0 auto;
+  margin: auto;
   padding: 2rem;
   background-color: #f9f9f9;
   border-radius: 8px;
@@ -94,8 +103,14 @@ input:focus, select:focus {
   transition: background-color 0.3s;
 }
 
-.login-button:hover {
+.login-button:not(:disabled):hover {
   background-color: #0056b3;
+}
+
+.login-button:disabled {
+  background-color: #ccc;
+  color: #666;
+  cursor: default;
 }
 
 .error-message {
@@ -115,33 +130,32 @@ input:focus, select:focus {
 </style>
 
 <script>
-import { mapActions } from 'vuex';
+import { mapActions, mapState } from 'vuex';
 
 export default {
   name: 'Login',
   data() {
     return {
-      login_choice: 'student_id',
+      login_choice: 'student_id', // 默认登录方式为学号
       student_id: '',
       email: '',
       password: '',
-      failed_login: false,
-      failed_response_data: {}
+      failed_login: false, // 登录失败状态
+      failed_response_data: {}, // 登录失败的响应数据
     };
   },
   computed: {
+    ...mapState(['isLoading']),
     credentials() {
-      if(this.login_choice === 'student_id'){
-        return { student_id: this.student_id, password: this.password };
-      } else {
-        return { email: this.email, password: this.password };
-      }
+      // 根据登录方式返回相应的凭证信息
+      return this.login_choice === 'student_id'
+        ? { student_id: this.student_id, password: this.password }
+        : { email: this.email, password: this.password };
     }
   },
   methods: {
     ...mapActions(['login']),
     async loginHandler() {
-      console.log('Login form submitted');
       try {
         await this.login(this.credentials);
       } catch (error) {

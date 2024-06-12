@@ -1,5 +1,5 @@
 from flask import jsonify, request, g, abort, current_app, Blueprint
-from ...models import User, Permission, Card
+from ...models import User, Permission, Card, Transaction
 from ... import db
 from ...decorators import permission_required
 
@@ -15,7 +15,7 @@ def get_cards():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     if request.method == 'GET':
-        pagination = Card.query.order_by(Card.created_at.desc()).paginate(
+        pagination = Card.query.order_by(Card.id.desc()).paginate(
             page=page, per_page=per_page, error_out=False)
         cards = pagination.items
     elif request.method == 'POST':
@@ -26,7 +26,7 @@ def get_cards():
                 'msg': 'No data provided'
             }
             return jsonify(response_json), response_json['code']
-        query = Card.query.order_by(Card.created_at.desc())
+        query = Card.query.order_by(Card.id.desc())
         try:
             for k, v in g.data.items():
                 query = query.filter(getattr(Card, k) == v)
@@ -204,7 +204,7 @@ def create_card(id):
             'success': True,
             'code': 200,
             'msg': 'Card created successfully',
-            'card': Card.query.filter_by(user=user).order_by(Card.created_at.desc()).first().to_json()
+            'card': Card.query.filter_by(user=user).order_by(Card.id.desc()).first().to_json()
         }
     else:
         response_json = {
@@ -237,12 +237,44 @@ def delete_card(id):
 
 
 @card_bp.route('/my')
-def get_my():
+def get_my_cards():
     response_json = {
         'success': True,
         'code': 200,
         'cards': [card.to_json() for card in g.current_user.cards]
     }
+    return jsonify(response_json), response_json['code']
+
+
+@card_bp.route('/my/<int:id>')
+def get_my_card(id):
+    card = g.current_user.cards.filter_by(id=id).first()
+    if card:
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+        pagination = card.transactions.order_by(Transaction.id.desc()).paginate(
+            page=page, per_page=per_page, error_out=False)
+        transactions = pagination.items
+        card_json = card.to_json(include_related=False)
+        card_json['transactions'] = [transaction.to_json(include_related=False) for transaction in transactions]
+        response_json = {
+            'success': True,
+            'code': 200,
+            'card': card_json,
+            'total': pagination.total,
+            'pages': pagination.pages,
+            'current_page': pagination.page,
+            'has_next': pagination.has_next,
+            'has_prev': pagination.has_prev,
+            'next_num': pagination.next_num,
+            'prev_num': pagination.prev_num
+        }
+    else:
+        response_json = {
+            'success': False,
+            'code': 404,
+            'msg': 'Card not found'
+        }
     return jsonify(response_json), response_json['code']
 
 

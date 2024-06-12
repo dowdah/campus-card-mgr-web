@@ -374,3 +374,7 @@ dist
 # Other
 .DS_Store
 *.xlsx
+
+# JoecosLocalGarbage
+Pipfile
+Pipfile.lock
