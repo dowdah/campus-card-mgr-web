@@ -8,8 +8,8 @@
       </div>
     </div>
   </transition>
-  <h4>我的一卡通及交易</h4>
   <div class="cards">
+    <h2>我的一卡通及交易</h2>
     <div v-if="isLoading" class="alert alert-info">加载中...</div>
     <div v-else-if="error" class="alert alert-danger">{{ error.message }}</div>
     <div v-else>
