@@ -5,7 +5,7 @@
     <div class="filters-group">
       <div class="form-group">
         <label for="startDate">开始日期</label>
-        <input type="date" id="startDate" v-model="startDate" :max="aDayBeforeEndDate" class="form-control no-input">
+        <input type="date" id="startDate" v-model="startDate" :max="aDayBeforeEndDate" min="1970-01-01" class="form-control no-input">
       </div>
       <div class="form-group">
         <label for="endDate">结束日期</label>
