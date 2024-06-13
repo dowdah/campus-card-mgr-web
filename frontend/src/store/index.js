@@ -22,6 +22,13 @@ const store = createStore({
         },
         setLoading(state, isLoading) {
             state.isLoading = isLoading;
+        },
+        setCardLost(state, cardId) {
+            const card = state.user.cards.find(card => card.id === cardId);
+            if (card) {
+                card.status = '已挂失';
+                card.is_lost = true;
+            }
         }
     },
     actions: {
@@ -116,7 +123,8 @@ const store = createStore({
         }
     },
     getters: {
-        isAuthenticated: state => !!state.user
+        isAuthenticated: state => !!state.user,
+        cards: state => state.user ? state.user.cards : []
     }
 });
 
