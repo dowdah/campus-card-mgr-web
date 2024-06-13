@@ -64,7 +64,7 @@
           <tbody>
             <tr v-for="transaction in responseData.transactions" :key="transaction.id">
               <td>{{ transaction.id }}</td>
-              <td>{{ transaction.amount }}</td>
+              <td>{{ transaction.amount }} ¥</td>
               <td>{{ transaction.created_at }}</td>
               <td>{{ transaction.card_id }}</td>
               <td>{{ transaction.original_balance }} ¥</td>
