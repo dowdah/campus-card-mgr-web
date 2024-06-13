@@ -124,6 +124,7 @@ export default {
     },
     async reportLost(cardId) {
       if (this.confirmLost) {
+        this.showWindow = false;
         try {
           await axios.get(`${BASE_API_URL}/card/my/lost/${cardId}`);
           this.error = null;
@@ -131,7 +132,6 @@ export default {
         } catch (error) {
           this.error = error.response.data;
         } finally {
-          this.showWindow = false;
           this.confirmLost = false;
         }
       } else {
