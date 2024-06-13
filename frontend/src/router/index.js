@@ -3,10 +3,14 @@ import Home from '../views/Home.vue';
 import Cards from '../views/Cards.vue';
 import PwdReset from '../views/PwdReset.vue';
 import store from '../store';
+import Transactions from "../views/Transactions.vue";
 
-const routes = [{path: '/', name: 'Home', component: Home}, {
-    path: '/cards', name: 'Cards', component: Cards, meta: {requiresAuth: true}
-}, {path: '/reset-pwd', name: 'PwdReset', component: PwdReset, meta: {blockWhenAuthenticated: true}}];
+const routes = [
+    {path: '/', name: 'Home', component: Home},
+    {path: '/cards', name: 'Cards', component: Cards, meta: {requiresAuth: true}},
+    {path: '/transactions', name: 'Transactions', component: Transactions, meta: {requiresAuth: true}},
+    {path: '/reset-pwd', name: 'PwdReset', component: PwdReset, meta: {blockWhenAuthenticated: true}}
+];
 
 const router = createRouter({
     history: createWebHistory(process.env.BASE_URL), routes

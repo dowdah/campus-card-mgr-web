@@ -13,6 +13,9 @@
         <li>
           <router-link to="/cards">我的一卡通</router-link>
         </li>
+        <li>
+          <router-link to="/transactions">交易记录</router-link>
+        </li>
       </template>
     </ul>
   </nav>

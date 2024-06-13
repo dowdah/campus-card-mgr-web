@@ -2,6 +2,7 @@ from flask import jsonify, request, g, abort, current_app, Blueprint
 from ...models import User, Permission, Card, Transaction
 from ... import db
 from ...decorators import permission_required
+from datetime import datetime
 
 
 transaction_bp = Blueprint('transaction', __name__)
@@ -84,4 +85,92 @@ def cancel_transaction(id):
                 'code': 400,
                 'msg': 'Transaction cancel failed: insufficient balance'
             }
+    return jsonify(response_json), response_json['code']
+
+
+@transaction_bp.route('/my/query', methods=['GET', 'POST'])
+def get_my_transactions():
+    # 查询所有符合条件的交易记录并分页返回
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    my_transactions = g.current_user.transactions
+
+    if request.method == 'GET':
+        pagination = my_transactions.order_by(Transaction.id.desc()).paginate(
+            page=page, per_page=per_page, error_out=False)
+        transactions = pagination.items
+    elif request.method == 'POST':
+        if g.data is None:
+            response_json = {
+                'success': False,
+                'code': 400,
+                'msg': 'No data provided'
+            }
+            return jsonify(response_json), response_json['code']
+
+        query = my_transactions.order_by(Transaction.id.desc())
+
+        # 检查是否提供了时间范围
+        start_date_str = g.data.get('start_date')
+        end_date_str = g.data.get('end_date')
+
+        if start_date_str:
+            try:
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+                query = query.filter(Transaction.created_at >= start_date)
+            except ValueError:
+                response_json = {
+                    'success': False,
+                    'code': 400,
+                    'msg': 'Invalid date format. Use YYYY-MM-DD'
+                }
+                return jsonify(response_json), response_json['code']
+
+        if end_date_str:
+            try:
+                end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+                query = query.filter(Transaction.created_at <= end_date)
+            except ValueError:
+                response_json = {
+                    'success': False,
+                    'code': 400,
+                    'msg': 'Invalid date format. Use YYYY-MM-DD'
+                }
+                return jsonify(response_json), response_json['code']
+
+        try:
+            for k, v in g.data.items():
+                if k not in ['start_date', 'end_date']:
+                    query = query.filter(getattr(Transaction, k) == v)
+        except AttributeError:
+            response_json = {
+                'success': False,
+                'code': 400,
+                'msg': 'Invalid parameter'
+            }
+            return jsonify(response_json), response_json['code']
+        else:
+            pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+            transactions = pagination.items
+
+    if transactions:
+        response_json = {
+            'success': True,
+            'code': 200,
+            'transactions': [transaction.to_json() for transaction in transactions],
+            'total': pagination.total,
+            'pages': pagination.pages,
+            'current_page': pagination.page,
+            'has_next': pagination.has_next,
+            'has_prev': pagination.has_prev,
+            'next_num': pagination.next_num,
+            'prev_num': pagination.prev_num
+        }
+    else:
+        response_json = {
+            'success': False,
+            'code': 404,
+            'msg': 'No transaction found'
+        }
+
     return jsonify(response_json), response_json['code']
