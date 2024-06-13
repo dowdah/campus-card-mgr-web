@@ -9,7 +9,7 @@
       </div>
       <div class="form-group">
         <label for="endDate">结束日期</label>
-        <input type="date" id="endDate" v-model="endDate" :max="getToday()" class="form-control no-input">
+        <input type="date" id="endDate" v-model="endDate" :max="getToday()" min="1970-01-01" class="form-control no-input">
       </div>
       <div class="form-group">
         <label for="cardId">卡号</label>
