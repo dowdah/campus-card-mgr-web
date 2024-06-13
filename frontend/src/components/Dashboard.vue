@@ -33,7 +33,7 @@
               <div class="info-cell">创建时间</div>
               <div class="info-cell">过期时间</div>
             </div>
-            <div v-for="(card, index) in user.cards" :key="index" class="info-row">
+            <div v-for="(card, index) in cards" :key="index" class="info-row">
               <div class="info-cell">{{ card.id }}</div>
               <div class="info-cell">{{ card.balance }} ¥</div>
               <div class="info-cell">{{ card.status }}</div>
@@ -162,12 +162,13 @@ h2 {
 }
 </style>
 <script>
-import {mapActions, mapState} from 'vuex';
+import {mapActions, mapState, mapGetters} from 'vuex';
 
 export default {
   name: 'Dashboard',
   computed: {
     ...mapState(['isLoading', 'user']),
+    ...mapGetters(['cards'])
   },
   methods: {
     ...mapActions(['logout', 'setLoading']),
