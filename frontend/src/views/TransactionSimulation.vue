@@ -33,7 +33,7 @@
           消费
         </label>
         <label for="amount">交易金额</label>
-        <input type="number" id="amount" v-model="amount" step="0.01" @blur="formatAmount"> ¥
+        <input type="number" id="amount" v-model="amount" min="0" step="0.01" @blur="formatAmount"> ¥
         <label for="card">选择一卡通</label>
         <select id="card" v-model="selectedCard">
           <option value="" disabled>请选择一卡通</option>
