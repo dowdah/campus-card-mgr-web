@@ -22,7 +22,9 @@
           </div>
         </div>
         <div class="card-info">
-          <h2>拥有的一卡通</h2>
+          <h2 class="sub-heading">
+            <router-link to="/cards">拥有的一卡通</router-link>
+          </h2>
           <div class="info-table">
             <div class="info-row header">
               <div class="info-cell">卡号</div>
@@ -39,7 +41,9 @@
               <div class="info-cell">{{ card.expires_at }}</div>
             </div>
           </div>
-          <h2>最近的交易</h2>
+          <h2 class="sub-heading">
+            <router-link to="/transactions">最近的交易</router-link>
+          </h2>
           <div class="info-table">
             <div class="info-row header">
               <div class="info-cell">时间</div>
@@ -55,7 +59,7 @@
               <div class="info-cell">{{ transaction.amount }} ¥</div>
               <div class="info-cell">{{ transaction.original_balance }} ¥</div>
               <div class="info-cell">{{ transaction.current_balance }} ¥</div>
-              <div class="info-cell">{{ transaction.is_canceled ? "已取消" : "正常" }}</div>
+              <div class="info-cell">{{ transaction.status }}</div>
             </div>
           </div>
         </div>
@@ -90,12 +94,6 @@
 h2 {
   margin-bottom: 10px;
   color: #333333;
-}
-
-.info-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
 }
 
 .userinfo-row {
@@ -149,27 +147,27 @@ h2 {
   align-self: stretch;
 }
 
-.login-button:not(:disabled):hover {
+.logout-button:not(:disabled):hover {
   background-color: #0056b3;
 }
 
-.login-button:disabled {
+.logout-button:disabled {
   background-color: #ccc;
   color: #666;
   cursor: default;
 }
+
+.sub-heading a {
+  color: #333333;
+}
 </style>
 <script>
-import {mapGetters, mapActions, mapState} from 'vuex';
+import {mapActions, mapState} from 'vuex';
 
 export default {
   name: 'Dashboard',
   computed: {
-    ...mapGetters(['isAuthenticated']),
-    ...mapState(['isLoading']),
-    user() {
-      return this.$store.state.user;
-    }
+    ...mapState(['isLoading', 'user']),
   },
   methods: {
     ...mapActions(['logout', 'setLoading']),
