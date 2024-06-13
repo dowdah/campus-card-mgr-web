@@ -26,7 +26,7 @@ def before_request():
         g.data = None
         g.files = None
     if g.data:
-        g.data = {k: v for k, v in g.data.items() if v}
+        g.data = {k: v for k, v in g.data.items() if v is not None}
 
 
 @v1_bp.route('/test', methods=['GET', 'POST'])
