@@ -87,7 +87,7 @@
 
 <script>
 import CardInfo from '../components/CardInfo.vue';
-import {mapGetters, mapActions, mapState} from 'vuex';
+import {mapGetters, mapActions, mapState, mapMutations} from 'vuex';
 import {BASE_API_URL} from '@/config/constants';
 import axios from 'axios';
 
@@ -96,7 +96,6 @@ export default {
   components: {CardInfo},
   data() {
     return {
-      cards: [],
       loading: false,
       error: null,
       collapsedCardIds: [],
@@ -106,33 +105,25 @@ export default {
     };
   },
   computed: {
-    ...mapState(['isLoading'])
+    ...mapState(['isLoading']),
+    ...mapGetters(['cards'])
   },
   methods: {
-    ...mapActions(['setLoading']),
-    async fetchCards() {
-      this.setLoading(true)
-      try {
-        const response = await axios.get(`${BASE_API_URL}/card/my`);
-        this.cards = response.data.cards;
-        this.error = null;
-      } catch (error) {
-        this.error = error.response.data;
-      } finally {
-        this.setLoading(false)
-      }
-    },
+    ...mapActions(['setLoading', 'init']),
+    ...mapMutations(['setCardLost']),
     async reportLost(cardId) {
       if (this.confirmLost) {
+        this.showWindow = false;
+        this.setLoading(true)
         try {
           await axios.get(`${BASE_API_URL}/card/my/lost/${cardId}`);
+          this.setCardLost(cardId);
           this.error = null;
-          this.fetchCards();
         } catch (error) {
           this.error = error.response.data;
         } finally {
-          this.showWindow = false;
           this.confirmLost = false;
+          this.setLoading(false)
         }
       } else {
         this.showWindow = true;
@@ -156,9 +147,6 @@ export default {
       this.confirmLost = false;
       this.lostCard = 0
     }
-  },
-  created() {
-    this.fetchCards();
   }
 };
 </script>
