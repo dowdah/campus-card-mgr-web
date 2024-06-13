@@ -32,16 +32,16 @@
       <div v-if="fetchedTransactions">
         <div class="transactions-summary">
           <div class="transaction-controls">
-          <p>页:（{{ currentPage }}/{{ responseData.pages }})</p>
-          <div class="page-size-selector">
-            <label for="itemsPerPage">每页显示:</label>
-            <select v-model="itemsPerPage">
-              <option value="5">5</option>
-              <option value="10">10</option>
-              <option value="15">15</option>
-            </select>
-          </div>
+            <p>页:（{{ currentPage }}/{{ responseData.pages }})</p>
+            <div class="page-size-selector">
+              <label for="itemsPerPage">每页显示:</label>
+              <select v-model="itemsPerPage">
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="15">15</option>
+              </select>
             </div>
+          </div>
         </div>
         <div class="transaction-list">
           <table>
@@ -90,7 +90,7 @@
   border-radius: 8px;
   max-width: 600px;
   margin: 2em auto;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   background-color: white;
 }
 
@@ -135,7 +135,7 @@ button:disabled {
 }
 
 .page-size-selector {
-display: flex;
+  display: flex;
   align-items: center;
 }
 
@@ -161,8 +161,12 @@ display: flex;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .transaction-controls {
@@ -188,7 +192,8 @@ display: flex;
 
 <script>
 import axios from 'axios';
-import { BASE_API_URL } from '@/config/constants';
+import {BASE_API_URL} from '@/config/constants';
+
 export default {
   name: 'CardInfo',
   emits: ['toggleCardDetails', 'reportLost'],
@@ -237,17 +242,17 @@ export default {
   },
   watch: {
     currentPage: {
-      handler: function(newVal, oldVal) {
+      handler: function (newVal, oldVal) {
         this.fetchTransactions(newVal, this.itemsPerPage);
       }
     },
     itemsPerPage: {
-      handler: function(newVal, oldVal) {
+      handler: function (newVal, oldVal) {
         this.fetchTransactions(this.currentPage, newVal);
       }
     },
     showDetails: {
-      handler: function(newVal, oldVal) {
+      handler: function (newVal, oldVal) {
         if (newVal && !this.fetchedTransactions) {
           this.fetchTransactions(this.currentPage, this.itemsPerPage);
         }

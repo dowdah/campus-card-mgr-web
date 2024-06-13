@@ -410,6 +410,10 @@ class Transaction(db.Model):
     def formatted_created_at(self):
         return self.created_at.strftime(OUTPUT_TIME_FORMAT)
 
+    @property
+    def status(self):
+        return '已撤销' if self.is_canceled else '正常'
+
     def cancel(self):
         offset = -self.amount
         if offset > 0:
@@ -432,7 +436,8 @@ class Transaction(db.Model):
             'is_canceled': self.is_canceled,
             'original_balance': '%.2f' % self.original_balance,
             'current_balance': '%.2f' % self.current_balance,
-            'card_id': self.card_id
+            'card_id': self.card_id,
+            'status': self.status
         }
         if include_related:
             related_json = {

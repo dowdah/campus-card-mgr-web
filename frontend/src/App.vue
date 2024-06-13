@@ -1,8 +1,8 @@
 <template>
   <div id="app">
-    <Navbar />
+    <Navbar/>
     <h3>{{ title }}</h3>
-    <Unconfirmed v-if="unconfirmed" />
+    <Unconfirmed v-if="unconfirmed"/>
     <router-view v-if="!unconfirmed"></router-view>
     <LoadingSpinner/>
   </div>
@@ -10,9 +10,10 @@
 
 <script>
 import Navbar from '@/components/Navbar.vue';
-import { mapGetters, mapActions, mapState } from 'vuex';
+import {mapGetters, mapActions, mapState} from 'vuex';
 import Unconfirmed from "@/views/Unconfirmed.vue";
 import LoadingSpinner from '@/components/LoadingSpinner.vue';
+
 export default {
   name: 'App',
   data() {
@@ -42,7 +43,7 @@ export default {
     ...mapActions(['logout']),
     logoutHandler() {
       this.logout().then(() => {
-        this.$router.push({ name: 'Home' });
+        this.$router.push({name: 'Home'});
       });
     }
   },

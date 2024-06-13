@@ -18,10 +18,10 @@ export default {
   },
   created() {
     fetch('/api/v1/users')
-      .then(response => response.json())
-      .then(data => {
-        this.users = data;
-      });
+        .then(response => response.json())
+        .then(data => {
+          this.users = data;
+        });
   }
 };
 </script>

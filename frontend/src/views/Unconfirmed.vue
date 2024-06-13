@@ -2,24 +2,27 @@
   <div class="confirm-container">
     <h2>验证你的邮箱！</h2>
     <form @submit.prevent="confirmEmail" class="confirm-form">
-    <div class="form-group">
+      <div class="form-group">
         <label for="student_id">学号</label>
-        <input type="text" v-model="student_id" disabled />
+        <input type="text" v-model="student_id" disabled/>
       </div>
       <div class="form-group">
         <label for="email">邮箱</label>
-        <input type="email" v-model="email" disabled />
+        <input type="email" v-model="email" disabled/>
       </div>
       <div class="form-group">
         <label for="verification_code">验证码</label>
-        <input type="text" v-model="token" required />
+        <input type="text" v-model="token" required/>
       </div>
-      <button @click="sendEmail" class="email-button" v-if="!emailSent" type="button" :disabled="isLoading">发送验证码</button>
+      <button @click="sendEmail" class="email-button" v-if="!emailSent" type="button" :disabled="isLoading">发送验证码
+      </button>
       <button type="submit" class="submit-button" v-else :disabled="isLoading">提交</button>
       <button class="logout-button" @click="logoutHandler" type="button" :disabled="isLoading">登出</button>
     </form>
     <div v-if="emailSent" class="success-message"><span class="success-icon">✉️</span>验证码邮件已发送，请查收。</div>
-    <div v-if="emailConfirmed" class="success-message"><span class="success-icon">✅</span>邮箱已确认。{{ countdown }} 秒后页面跳转。</div>
+    <div v-if="emailConfirmed" class="success-message"><span class="success-icon">✅</span>邮箱已确认。{{ countdown }}
+      秒后页面跳转。
+    </div>
     <div v-if="requestFailed" class="error-message"><span class="error-icon">❎</span>{{ responseData.msg }}</div>
   </div>
 </template>
@@ -134,9 +137,10 @@ input:focus, select:focus {
 </style>
 
 <script>
-import { mapGetters, mapActions, mapState } from 'vuex';
-import { BASE_API_URL } from '@/config/constants';
+import {mapGetters, mapActions, mapState} from 'vuex';
+import {BASE_API_URL} from '@/config/constants';
 import axios from 'axios';
+
 export default {
   name: 'Unconfirmed',
   data() {
@@ -159,44 +163,44 @@ export default {
     ...mapActions(['logout', 'setLoading']),
     logoutHandler() {
       this.logout().then(() => {
-        this.$router.push({ name: 'Home' });
+        this.$router.push({name: 'Home'});
       });
     },
     sendEmail() {
       this.setLoading(true)
       axios.get(`${BASE_API_URL}/auth/send-confirmation`)
-        .then(() => {
-          this.emailSent = true;
-        })
-        .catch(err => {
-          this.requestFailed = true;
-          this.responseData = err.response.data;
-        })
-        .finally(() => {
-          this.setLoading(false);
-        });
+          .then(() => {
+            this.emailSent = true;
+          })
+          .catch(err => {
+            this.requestFailed = true;
+            this.responseData = err.response.data;
+          })
+          .finally(() => {
+            this.setLoading(false);
+          });
     },
     confirmEmail() {
       this.setLoading(true)
       axios.get(`${BASE_API_URL}/auth/confirm/${this.token}`)
-        .then(() => {
-          this.emailConfirmed = true;
-          this.requestFailed = false;
-          const interval = setInterval(() => {
-            this.countdown--;
-            if (this.countdown === 0) {
-              clearInterval(interval);
-              window.location.reload();
-            }
-          }, 1000);
-        })
-        .catch(err => {
-          this.requestFailed = true;
-          this.responseData = err.response.data;
-        })
-        .finally(() => {
-          this.setLoading(false);
-        });
+          .then(() => {
+            this.emailConfirmed = true;
+            this.requestFailed = false;
+            const interval = setInterval(() => {
+              this.countdown--;
+              if (this.countdown === 0) {
+                clearInterval(interval);
+                window.location.reload();
+              }
+            }, 1000);
+          })
+          .catch(err => {
+            this.requestFailed = true;
+            this.responseData = err.response.data;
+          })
+          .finally(() => {
+            this.setLoading(false);
+          });
     }
   }
 }

@@ -1,13 +1,14 @@
 <template>
   <transition name="spinner">
-  <div class="spinner-overlay" v-if="isLoading">
-    <div class="spinner"></div>
-  </div>
+    <div class="spinner-overlay" v-if="isLoading">
+      <div class="spinner"></div>
+    </div>
   </transition>
 </template>
 
 <script>
-import { mapState } from 'vuex';
+import {mapState} from 'vuex';
+
 export default {
   computed: {
     ...mapState(['isLoading'])
