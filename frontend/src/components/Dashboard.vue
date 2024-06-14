@@ -18,7 +18,7 @@
           </div>
           <div class="userinfo-row">
             <div class="info-label">身份</div>
-            <div class="info-value">{{ user.role }}</div>
+            <div class="info-value">{{ user.role.name }}</div>
           </div>
         </div>
         <div class="card-info">

@@ -5,7 +5,8 @@ import axios from 'axios';
 const store = createStore({
     state: {
         user: null,
-        isLoading: false
+        isLoading: false,
+        permissions: null
     },
     mutations: {
         setUser(state, user) {
@@ -14,7 +15,7 @@ const store = createStore({
                 'SiteOperator': '网站运营者',
                 'User': '普通用户'
             };
-            user.role = roleTranslations[user.role] || user.role;
+            user.role.name = roleTranslations[user.role.name] || user.role.name;
             state.user = user;
         },
         clearUser(state) {
@@ -29,6 +30,9 @@ const store = createStore({
                 card.status = '已挂失';
                 card.is_lost = true;
             }
+        },
+        setPermissions(state, permissions) {
+            state.permissions = permissions;
         }
     },
     actions: {
@@ -73,6 +77,9 @@ const store = createStore({
                 try {
                     const response = await axios.get(`${BASE_API_URL}/auth/me`);
                     commit('setUser', response.data.user);
+                    if (state.permissions === null) {
+                        await store.dispatch('fetchPermissions');
+                    }
                     if (response.data.token) {
                         // 如果后端返回了新的token，更新本地存储的token，并设置axios的默认请求头
                         // 后端是否返回新token，取决于 auth.py 中 ALLOW_TOKEN_REFRESH 的设置
@@ -120,11 +127,32 @@ const store = createStore({
         },
         setLoading({commit}, isLoading) {
             commit('setLoading', isLoading);
+        },
+        async fetchPermissions({commit}) {
+            try {
+                const response = await axios.get(`${BASE_API_URL}/permissions`);
+                commit('setPermissions', response.data.permissions);
+            } catch (error) {
+                console.error('Fetch permissions error:', error);
+                throw error;
+            }
         }
     },
     getters: {
         isAuthenticated: state => !!state.user,
-        cards: state => state.user ? state.user.cards : []
+        cards: state => state.user ? state.user.cards : [],
+        hasPermission: function (state) {
+            return function (permission) {
+                const permissionNumber = state.permissions[permission];
+                const operatorPermissionNumber = state.permissions['OPERATOR'];
+                if (permissionNumber === undefined || !store.getters.isAuthenticated) {
+                    return false;
+                } else {
+                    return (state.user.role.permissions & operatorPermissionNumber) === operatorPermissionNumber ||
+                        (state.user.role.permissions & permissionNumber) === permissionNumber;
+                }
+            }
+        }
     }
 });
 
