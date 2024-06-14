@@ -55,12 +55,11 @@
             </tr>
             <tr v-for="transaction in responseData.card.transactions" :key="transaction.id" class="transaction">
               <td>{{ transaction.id }}</td>
-              <td>{{ transaction.amount }}</td>
+              <td>{{ transaction.amount }} ¥</td>
               <td>{{ transaction.created_at }}</td>
               <td>{{ transaction.original_balance }} ¥</td>
               <td>{{ transaction.current_balance }} ¥</td>
-              <td v-if="transaction.is_canceled">交易已取消</td>
-              <td v-else>正常</td>
+              <td>{{ transaction.status }}</td>
             </tr>
           </table>
         </div>
@@ -256,7 +255,8 @@ export default {
         if (newVal && !this.fetchedTransactions) {
           this.fetchTransactions(this.currentPage, this.itemsPerPage);
         }
-      }
+      },
+      immediate: true
     }
   }
 };

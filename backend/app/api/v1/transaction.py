@@ -174,3 +174,66 @@ def get_my_transactions():
         }
 
     return jsonify(response_json), response_json['code']
+
+
+@transaction_bp.route('/my/make', methods=['POST'])
+def make_my_transaction():
+    card_id = g.data.get('card_id')
+    amount = g.data.get('amount')
+    method = g.data.get('method')
+    response_json = {}
+    if not (card_id and amount and method):
+        response_json = {
+            'success': False,
+            'code': 400,
+            'msg': '缺失参数。'
+        }
+        return jsonify(response_json), response_json['code']
+    card = g.current_user.cards.filter_by(id=card_id).first()
+    if card:
+        if card.is_active:
+            if method == 'recharge':
+                if card.recharge(amount):
+                    response_json = {
+                        'success': True,
+                        'code': 200,
+                        'msg': '充值成功。'
+                    }
+                else:
+                    response_json = {
+                        'success': False,
+                        'code': 400,
+                        'msg': '充值失败，检查参数是否正确。'
+                    }
+            elif method == 'consume':
+                if card.consume(amount):
+                    response_json = {
+                        'success': True,
+                        'code': 200,
+                        'msg': '消费成功。'
+                    }
+                else:
+                    response_json = {
+                        'success': False,
+                        'code': 400,
+                        'msg': '消费失败，检查参数是否正确或余额是否充足。'
+                    }
+            else:
+                response_json = {
+                    'success': False,
+                    'code': 400,
+                    'msg': '参数错误: 无效的交易方式。'
+                }
+        else:
+            response_json = {
+                'success': False,
+                'code': 400,
+                'msg': '卡片状态异常，交易失败。'
+            }
+    else:
+        response_json = {
+            'success': False,
+            'code': 400,
+            'msg': '卡片未找到。'
+        }
+    return jsonify(response_json), response_json['code']

@@ -16,6 +16,9 @@
         <li>
           <router-link to="/transactions">交易记录</router-link>
         </li>
+        <li>
+          <router-link to="/simulation">模拟交易</router-link>
+        </li>
       </template>
     </ul>
   </nav>
