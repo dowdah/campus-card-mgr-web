@@ -174,7 +174,7 @@ export default {
     ...mapActions(['logout', 'setLoading']),
     logoutHandler() {
       this.logout().then(() => {
-        this.$router.push({name: 'Home'});
+        this.$router.push({name: '主页'});
       });
     }
   }

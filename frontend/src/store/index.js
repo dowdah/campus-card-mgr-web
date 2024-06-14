@@ -6,7 +6,8 @@ const store = createStore({
     state: {
         user: null,
         isLoading: false,
-        permissions: null
+        permissions: null,
+        isInitialized: false
     },
     mutations: {
         setUser(state, user) {
@@ -33,6 +34,9 @@ const store = createStore({
         },
         setPermissions(state, permissions) {
             state.permissions = permissions;
+        },
+        setInitialized(state, isInitialized) {
+            state.isInitialized = isInitialized;
         }
     },
     actions: {
@@ -46,6 +50,9 @@ const store = createStore({
                     localStorage.setItem('token', response.data.token);
                     axios.defaults.headers.common['Authorization'] = 'Basic ' + btoa(response.data.token + ':');
                     commit('setUser', response.data.user);
+                    if (store.state.permissions === null) {
+                        await store.dispatch('fetchPermissions');
+                    }
                 } else {
                     alert('登录失败：' + response.data.msg)
                 }
@@ -100,6 +107,7 @@ const store = createStore({
             } else {
                 commit('setLoading', false);
             }
+            commit('setInitialized', true);
         },
         async resetPassword({commit}, payload) {
             commit('setLoading', true);
@@ -144,11 +152,10 @@ const store = createStore({
         hasPermission: function (state) {
             return function (permission) {
                 const permissionNumber = state.permissions[permission];
-                const operatorPermissionNumber = state.permissions['OPERATOR'];
                 if (permissionNumber === undefined || !store.getters.isAuthenticated) {
                     return false;
                 } else {
-                    return (state.user.role.permissions & operatorPermissionNumber) === operatorPermissionNumber ||
+                    return (state.user.role.permissions & state.permissions['OPERATOR']) === state.permissions['OPERATOR'] ||
                         (state.user.role.permissions & permissionNumber) === permissionNumber;
                 }
             }
