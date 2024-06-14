@@ -18,7 +18,7 @@
           </div>
           <div class="userinfo-row">
             <div class="info-label">身份</div>
-            <div class="info-value">{{ user.role }}</div>
+            <div class="info-value">{{ user.role.name }}</div>
           </div>
         </div>
         <div class="card-info">
@@ -63,6 +63,17 @@
             </div>
           </div>
         </div>
+        <div class="permissions-info" v-if="user.role.name !== '普通用户'">
+          <h2>你拥有的权限</h2>
+          <p class="hint">此栏仅管理员可见，方便确认自己的权能</p>
+          <div class="permission-table">
+            <div v-for="(permission_number, permission_name, index) in permissions" :key="permission_number"
+                 class="permission-row">
+              <input type="checkbox" :id="permission_number" :disabled="true" :checked="hasPermission(permission_name)">
+              <label :for="permission_number">{{ permission_name }}</label>
+            </div>
+          </div>
+        </div>
         <button @click="logoutHandler" class="logout-button" :disabled="isLoading">登出</button>
       </template>
     </div>
@@ -84,11 +95,18 @@
   margin: 0 auto;
 }
 
-.user-info, .card-info {
+.user-info, .card-info, .permissions-info {
   background-color: #ffffff;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.hint {
+  text-align: center;
+  margin-top: 10px;
+  font-size: 14px;
+  color: #666;
 }
 
 h2 {
@@ -160,6 +178,40 @@ h2 {
 .sub-heading a {
   color: #333333;
 }
+
+.permission-table {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+}
+
+.permission-row {
+  display: flex;
+  align-items: center;
+  background-color: #f1f3f5;
+  padding: 5px;
+  border-radius: 4px;
+}
+
+.permission-row:hover {
+  background-color: #e9ecef;
+}
+
+
+
+.permission-row input {
+  margin-right: 10px;
+}
+
+.permission-row label {
+  color: #333333;
+}
+
+
 </style>
 <script>
 import {mapActions, mapState, mapGetters} from 'vuex';
@@ -167,14 +219,14 @@ import {mapActions, mapState, mapGetters} from 'vuex';
 export default {
   name: 'Dashboard',
   computed: {
-    ...mapState(['isLoading', 'user']),
-    ...mapGetters(['cards'])
+    ...mapState(['isLoading', 'user', 'permissions']),
+    ...mapGetters(['cards', 'hasPermission'])
   },
   methods: {
     ...mapActions(['logout', 'setLoading']),
     logoutHandler() {
       this.logout().then(() => {
-        this.$router.push({name: 'Home'});
+        this.$router.push({name: '主页'});
       });
     }
   }

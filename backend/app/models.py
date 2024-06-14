@@ -51,6 +51,14 @@ class Role(db.Model):
         else:
             return self.permissions & perm == perm
 
+    def to_json(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'default': self.default,
+            'permissions': self.permissions
+        }
+
     @staticmethod
     def insert_roles():
         roles = {
@@ -122,6 +130,14 @@ class Permission:
     OPERATOR = 524288  # 操作员权限
     ADD_USER = 1048576  # 添加用户
     DEL_REPORTS = 2097152  # 删除报告
+
+    @staticmethod
+    def to_json():
+        d = dict()
+        for k, v in Permission.__dict__.items():
+            if not k.startswith('__') and not callable(v) and isinstance(v, int):
+                d[k] = v
+        return d
 
 
 class User(db.Model):
@@ -244,7 +260,7 @@ class User(db.Model):
             'created_at': self.formatted_created_at,
             'id': self.id,
             'email': self.email,
-            'role': self.role.name,
+            'role': self.role.to_json(),
             'confirmed': self.confirmed
         }
         if include_related:
