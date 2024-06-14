@@ -8,7 +8,7 @@
         </tr>
         <tr>
           <td>余额:</td>
-          <td>{{ card.balance }}</td>
+          <td>{{ card.balance }} ¥</td>
         </tr>
         <tr>
           <td>状态:</td>
