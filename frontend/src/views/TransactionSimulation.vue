@@ -33,7 +33,10 @@
           消费
         </label>
         <label for="amount">交易金额</label>
-        <input type="number" id="amount" v-model="amount" min="0" step="0.01" @blur="formatAmount"> ¥
+        <input v-if="transactionType==='consume'" type="number" id="amount" v-model="amount" min="0" step="0.01"
+               @blur="formatAmount" :max="maxConsumeAmount">
+        <input v-if="transactionType==='recharge'" type="number" id="amount" v-model="amount" min="0" step="0.01"
+               @blur="formatAmount"> ¥
         <label for="card">选择一卡通</label>
         <select id="card" v-model="selectedCard">
           <option value="" disabled>请选择一卡通</option>
@@ -196,6 +199,14 @@ export default {
     },
     postDataReady() {
       return this.selectedCard && this.amount > 0
+    },
+    maxConsumeAmount() {
+      if (this.selectedCard !== '') {
+        const card = this.availableCards.find(card => card.id === parseInt(this.selectedCard));
+        return card.balance;
+      } else {
+        return 0;
+      }
     }
   },
   methods: {
@@ -203,6 +214,12 @@ export default {
     formatAmount() {
       // 使用toFixed方法将金额格式化为两位小数
       if (this.amount !== null) {
+        if (this.transactionType === 'consume' && parseFloat(this.amount) > parseFloat(this.maxConsumeAmount)) {
+          this.amount = this.maxConsumeAmount;
+        }
+        if (this.amount < 0) {
+          this.amount = 0;
+        }
         this.amount = parseFloat(this.amount).toFixed(2);
       }
     },
@@ -218,6 +235,20 @@ export default {
         this.responseData = error.response.data;
       } finally {
         this.setLoading(false);
+      }
+    }
+  },
+  watch: {
+    selectedCard(newVal, oldVal) {
+      if (this.transactionType === 'consume' && parseFloat(this.amount) > parseFloat(this.maxConsumeAmount)) {
+        this.amount = parseFloat(this.maxConsumeAmount).toFixed(2);
+      }
+    },
+    transactionType(newVal, oldVal) {
+      console.log(`Amount: ${this.amount}, Max consume amount: ${this.maxConsumeAmount}`);
+      if (newVal === 'consume' && parseFloat(this.amount) > parseFloat(this.maxConsumeAmount)) {
+        console.log('Amount exceeds max consume amount');
+        this.amount = parseFloat(this.maxConsumeAmount).toFixed(2);
       }
     }
   }
