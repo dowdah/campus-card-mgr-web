@@ -142,6 +142,15 @@ button:disabled {
   border-bottom: 1px solid #eee;
   padding-bottom: 10px;
   margin-bottom: 10px;
+  cursor: default;
+}
+
+.transaction:last-child {
+  border-bottom: none;
+}
+
+.transaction:hover {
+  background-color: #f9f9f9;
 }
 
 .transaction-list table {
