@@ -1,13 +1,8 @@
 <template>
-  <transition name="v">
-    <div v-if="showWindow" class="modal">
-      <div class="modal-content">
-        <p>确定要报告此卡(卡号: {{ lostCard }})丢失吗？</p>
-        <button @click="confirmReportLost" class="modal-button">确定</button>
-        <button @click="cancelReportLost" class="modal-button">取消</button>
-      </div>
-    </div>
-  </transition>
+  <modal-window :show-modal="lostCardData.showModalWindow" @close="clearLostCardData"
+                @confirm="reportLost(lostCardData.card.id)">
+    确定要报告此卡(卡号: {{ lostCardData.card.id }})丢失吗？
+  </modal-window>
   <div class="cards">
     <h2>我的一卡通及交易</h2>
     <div v-if="isLoading" class="alert alert-info">加载中...</div>
@@ -16,7 +11,7 @@
       <div v-for="(card, index) in cards" :key="index" class="card">
         <CardInfo :card="card" @toggleCardDetails="toggleCardDetails"
                   :showDetails="collapsedCardIds.includes(card.id)"
-                  @reportLost="reportLost"
+                  @reportLost="showLostModal(card)"
         ></CardInfo>
       </div>
     </div>
@@ -87,21 +82,25 @@
 
 <script>
 import CardInfo from '../components/CardInfo.vue';
+import ModalWindow from "../components/ModalWindow.vue";
 import {mapGetters, mapActions, mapState, mapMutations} from 'vuex';
 import {BASE_API_URL} from '@/config/constants';
 import axios from 'axios';
 
 export default {
   name: 'Cards',
-  components: {CardInfo},
+  components: {ModalWindow, CardInfo},
   data() {
     return {
       loading: false,
       error: null,
       collapsedCardIds: [],
-      confirmLost: false,
-      showWindow: false,
-      lostCard: 0
+      lostCardData: {
+        card: null,
+        responseData: null,
+        failed: false,
+        showModalWindow: false
+      }
     };
   },
   computed: {
@@ -112,22 +111,18 @@ export default {
     ...mapActions(['setLoading', 'init']),
     ...mapMutations(['setCardLost']),
     async reportLost(cardId) {
-      if (this.confirmLost) {
-        this.showWindow = false;
-        this.setLoading(true)
-        try {
-          await axios.get(`${BASE_API_URL}/card/my/lost/${cardId}`);
-          this.setCardLost(cardId);
-          this.error = null;
-        } catch (error) {
-          this.error = error.response.data;
-        } finally {
-          this.confirmLost = false;
-          this.setLoading(false)
-        }
-      } else {
-        this.showWindow = true;
-        this.lostCard = cardId
+      this.clearLostCardData()
+      this.setLoading(true)
+      try {
+        const response = await axios.get(`${BASE_API_URL}/card/my/lost/${cardId}`);
+        this.setCardLost(cardId);
+        this.lostCardData.responseData = response.data;
+        this.lostCardData.failed = false;
+      } catch (error) {
+        this.error = error.response.data;
+        this.lostCardData.failed = true;
+      } finally {
+        this.setLoading(false)
       }
     },
     async toggleCardDetails(cardId) {
@@ -137,15 +132,13 @@ export default {
         this.collapsedCardIds.push(cardId);
       }
     },
-    confirmReportLost() {
-      this.confirmLost = true;
-      this.reportLost(this.lostCard);
-      this.lostCard = 0
+    showLostModal(card) {
+      this.lostCardData.card = card;
+      this.lostCardData.showModalWindow = true;
     },
-    cancelReportLost() {
-      this.showWindow = false;
-      this.confirmLost = false;
-      this.lostCard = 0
+    clearLostCardData() {
+      this.lostCardData.card = null;
+      this.lostCardData.showModalWindow = false;
     }
   }
 };
