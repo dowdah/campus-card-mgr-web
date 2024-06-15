@@ -11,12 +11,6 @@ const store = createStore({
     },
     mutations: {
         setUser(state, user) {
-            const roleTranslations = {
-                'SchoolStaff': '学校管理员',
-                'SiteOperator': '网站运营者',
-                'User': '普通用户'
-            };
-            user.role.name = roleTranslations[user.role.name] || user.role.name;
             state.user = user;
         },
         clearUser(state) {

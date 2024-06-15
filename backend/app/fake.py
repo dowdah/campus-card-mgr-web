@@ -29,6 +29,7 @@ def users(count=20):
                 db.session.rollback()
             bar()
 
+
 def cards():
     print("Making cards...")
     fake = Faker()
@@ -68,9 +69,9 @@ def main(count=20):
     db.drop_all()
     db.create_all()
     Role.insert_roles()
-    school_staff = Role.query.filter_by(name='SchoolStaff').first()
-    site_operator = Role.query.filter_by(name='SiteOperator').first()
-    user = Role.query.filter_by(name='User').first()
+    school_staff = Role.query.filter_by(name='学校管理员').first()
+    site_operator = Role.query.filter_by(name='网站运营者').first()
+    user = Role.query.filter_by(name='普通用户').first()
     u_1 = User(email='x@dowdah.com', name='张天宇', student_id=2300160426, password='666666', confirmed=True, role=site_operator)
     db.session.add(u_1)
     u_2 = User(email='1534887783@qq.com', name='乔', student_id=2300114514, password='666666', confirmed=True, role=school_staff)
