@@ -2,7 +2,7 @@ from flask import jsonify, request, g, abort, current_app, Blueprint
 from ...models import User, Permission
 from ... import db
 from ...decorators import permission_required, operator_only
-
+from datetime import datetime
 
 user_bp = Blueprint('user', __name__)
 EDITABLE_ATTRS = ['name', 'student_id', 'email', 'confirmed', 'comments']  # 操作人员可修改的用户属性
@@ -12,10 +12,20 @@ EDITABLE_ATTRS = ['name', 'student_id', 'email', 'confirmed', 'comments']  # 操
 @permission_required(Permission.VIEW_USER_INFO)
 def get_users():
     # 查询所有符合条件的用户并分页返回
+    users = None
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
+    sort_by = request.args.get('sort_by', 'id', type=str)  # 如果 sort_by 不是 User 的属性则默认为 'id'
+    sort_order = request.args.get('sort_order', 'asc', type=str)  # 如果 sort_order 不是 'desc' 则默认为 'asc'
     if request.method == 'GET':
-        pagination = User.query.paginate(page=page, per_page=per_page, error_out=False)
+        try:
+            query = User.query.order_by(
+                getattr(User, sort_by).desc() if sort_order == 'desc' else getattr(User, sort_by).asc())
+        except AttributeError:
+            sort_by = 'id'
+            query = User.query.order_by(
+                getattr(User, sort_by).desc() if sort_order == 'desc' else getattr(User, sort_by).asc())
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
         users = pagination.items
     elif request.method == 'POST':
         if g.data is None:
@@ -25,10 +35,19 @@ def get_users():
                 'msg': 'No data provided'
             }
             return jsonify(response_json), response_json['code']
+        start_date_str = g.data.get('start_date', None)
+        end_date_str = g.data.get('end_date', None)
         query = User.query
         try:
             for k, v in g.data.items():
-                query = query.filter(getattr(User, k) == v)
+                if k == 'role_name':
+                    query = query.filter(User.role.has(name=v))
+                elif k in ['name', 'student_id', 'email', 'comments']:
+                    query = query.filter(getattr(User, k).like('%' + v + '%'))
+                elif k in ['start_date', 'end_date']:
+                    continue
+                else:
+                    query = query.filter(getattr(User, k) == v)
         except AttributeError:
             response_json = {
                 'success': False,
@@ -37,13 +56,43 @@ def get_users():
             }
             return jsonify(response_json), response_json['code']
         else:
+            try:
+                query = query.order_by(
+                    getattr(User, sort_by).desc() if sort_order == 'desc' else getattr(User, sort_by).asc())
+            except AttributeError:
+                sort_by = 'id'
+                query = query.order_by(
+                    getattr(User, sort_by).desc() if sort_order == 'desc' else getattr(User, sort_by).asc())
+            if start_date_str:
+                try:
+                    start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+                    query = query.filter(User.created_at >= start_date)
+                except ValueError:
+                    response_json = {
+                        'success': False,
+                        'code': 400,
+                        'msg': 'Invalid date format. Use YYYY-MM-DD'
+                    }
+                    return jsonify(response_json), response_json['code']
+
+            if end_date_str:
+                try:
+                    end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+                    query = query.filter(User.created_at <= end_date)
+                except ValueError:
+                    response_json = {
+                        'success': False,
+                        'code': 400,
+                        'msg': 'Invalid date format. Use YYYY-MM-DD'
+                    }
+                    return jsonify(response_json), response_json['code']
             pagination = query.paginate(page=page, per_page=per_page, error_out=False)
             users = pagination.items
     if users:
         response_json = {
             'success': True,
             'code': 200,
-            'users': [user.to_json(include_sensitive=True) for user in users],
+            'users': [user.to_json(include_sensitive=True, include_related=False) for user in users],
             'total': pagination.total,
             'pages': pagination.pages,
             'current_page': pagination.page,
