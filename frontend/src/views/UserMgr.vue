@@ -455,6 +455,7 @@ export default {
     },
     requestData: {
       handler: function (newVal, oldVal) {
+        this.currentPage = 1;
         if (this.immediateQuery) {
           this.fetchUsers(this.currentPage, this.perPage);
         }
