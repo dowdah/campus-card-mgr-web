@@ -5,11 +5,13 @@
     <div class="filters-group">
       <div class="form-group">
         <label for="startDate">开始日期</label>
-        <input type="date" id="startDate" v-model="startDate" :max="aDayBeforeEndDate" class="form-control no-input">
+        <input type="date" id="startDate" v-model="startDate" min="1970-01-01" :max="aDayBeforeEndDate"
+               class="form-control no-input">
       </div>
       <div class="form-group">
         <label for="endDate">结束日期</label>
-        <input type="date" id="endDate" v-model="endDate" :max="getToday()" class="form-control no-input">
+        <input type="date" id="endDate" v-model="endDate" min="1970-01-02" :max="getToday()"
+               class="form-control no-input">
       </div>
       <div class="form-group">
         <label for="cardId">卡号</label>
@@ -21,9 +23,9 @@
       <div class="form-group">
         <label for="transactionStatus">交易状态</label>
         <select id="transactionStatus" v-model="transactionStatus" class="form-control">
-          <option value="all">全部</option>
+          <option value="all">未选择</option>
           <option value="normal">正常</option>
-          <option value="canceled">已取消</option>
+          <option value="canceled">已撤销</option>
         </select>
       </div>
       <div class="form-group">
@@ -39,7 +41,8 @@
         <input type="checkbox" id="immediateQuery" v-model="immediateQuery" class="form-control">
       </div>
     </div>
-    <button v-if="!immediateQuery" @click="queryHandler" :disabled="isLoading" class="btn btn-primary query-btn">查询</button>
+    <button v-if="!immediateQuery" @click="queryHandler" :disabled="isLoading" class="btn btn-primary query-btn">查询
+    </button>
     <div v-if="requestFailed" class="alert alert-danger">
       <p>查询失败: {{ responseData.msg }}</p>
     </div>
@@ -51,30 +54,30 @@
       <div class="transactions-table">
         <table class="table">
           <thead>
-            <tr>
-              <th>交易ID</th>
-              <th>金额</th>
-              <th>时间</th>
-              <th>卡号</th>
-              <th>交易前余额</th>
-              <th>交易后余额</th>
-              <th>状态</th>
-            </tr>
+          <tr>
+            <th>交易ID</th>
+            <th>金额</th>
+            <th>时间</th>
+            <th>卡号</th>
+            <th>交易前余额</th>
+            <th>交易后余额</th>
+            <th>状态</th>
+          </tr>
           </thead>
           <tbody>
-            <tr v-for="transaction in responseData.transactions" :key="transaction.id">
-              <td>{{ transaction.id }}</td>
-              <td>{{ transaction.amount }}</td>
-              <td>{{ transaction.created_at }}</td>
-              <td>{{ transaction.card_id }}</td>
-              <td>{{ transaction.original_balance }} ¥</td>
-              <td>{{ transaction.current_balance }} ¥</td>
-              <td>{{ transaction.status }}</td>
-            </tr>
+          <tr v-for="transaction in responseData.transactions" :key="transaction.id">
+            <td>{{ transaction.id }}</td>
+            <td>{{ transaction.amount }} ¥</td>
+            <td>{{ transaction.created_at }}</td>
+            <td>{{ transaction.card_id }}</td>
+            <td>{{ transaction.original_balance }} ¥</td>
+            <td>{{ transaction.current_balance }} ¥</td>
+            <td>{{ transaction.status }}</td>
+          </tr>
           </tbody>
         </table>
       </div>
-            <div class="pagination">
+      <div class="pagination">
         <button @click="prevPage" :disabled="!responseData.has_prev" class="btn btn-secondary">上一页</button>
         <button @click="nextPage" :disabled="!responseData.has_next" class="btn btn-secondary">下一页</button>
       </div>
@@ -316,6 +319,7 @@ export default {
     },
     requestData: {
       handler: function (newVal, oldVal) {
+        this.currentPage = 1;
         if (this.immediateQuery) {
           this.fetchTransactions(this.currentPage, this.perPage);
         }
@@ -324,7 +328,7 @@ export default {
     }
   },
   created() {
-    if (this.immediateQuery){
+    if (this.immediateQuery) {
       this.fetchTransactions(this.currentPage, this.perPage);
     }
   }

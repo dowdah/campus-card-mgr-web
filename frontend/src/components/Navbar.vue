@@ -1,35 +1,86 @@
 <template>
   <nav>
     <ul>
-      <li>
-        <router-link to="/">主页</router-link>
+      <li v-for="route in filteredRoutes" :key="route.name">
+        <router-link :to="route.path">{{ route.name }}</router-link>
       </li>
-      <template v-if="!isAuthenticated">
-        <li>
-          <router-link to="/reset-pwd">忘记密码</router-link>
-        </li>
-      </template>
-      <template v-if="isAuthenticated">
-        <li>
-          <router-link to="/cards">我的一卡通</router-link>
-        </li>
-        <li>
-          <router-link to="/transactions">交易记录</router-link>
-        </li>
-      </template>
     </ul>
   </nav>
 </template>
 
 <script>
-import {mapGetters} from 'vuex';
+import {mapGetters, mapState, mapActions} from 'vuex';
+import {useRouter} from 'vue-router';
 
 export default {
   name: 'Navbar',
+  data() {
+    return {
+      routes: [],
+      filteredRoutes: []
+    };
+  },
+  methods: {
+    ...mapActions(['fetchPermissions']),
+    filterRoutes() {
+      this.filteredRoutes = this.routes.filter(route => {
+        // 检查 requiresAuth
+        if (route.meta) {
+          if (route.meta.requiresAuth && !this.isAuthenticated) {
+            console.log(`Exclude ${route.name} because it requires authentication.`)
+            return false;
+          }
+          // 检查 blockWhenAuthenticated
+          if (route.meta.blockWhenAuthenticated && this.isAuthenticated) {
+            console.log(`Exclude ${route.name} because it blocks when authenticated.`)
+            return false;
+          }
+          // 检查 requiresPermission
+          if (route.meta.requiresPermission) {
+            for (let permission of route.meta.requiresPermission) {
+              if (!this.hasPermission(permission)) {
+                console.log(`Exclude ${route.name} because it requires permission ${permission}.`)
+                return false;
+              }
+            }
+          }
+        }
+        return true;
+      });
+    }
+  },
   computed: {
-    ...mapGetters(['isAuthenticated'])
-  }
-}
+    ...mapGetters(['isAuthenticated', 'hasPermission']),
+    ...mapState(['isInitialized', 'permissions'])
+  },
+  created() {
+    const router = useRouter();
+    this.routes = router.options.routes;
+  },
+  watch: {
+    isInitialized: {
+      immediate: true,
+      handler(newVal, oldVal) {
+        // 等待初始化后再过滤路由
+        if (newVal) {
+          this.filterRoutes();
+        }
+      }
+    },
+    isAuthenticated(newVal, oldVal) {
+      // 在已经初始化，然后改变登录状态的情况下重新过滤路由
+      if (this.isInitialized && this.permissions !== null) {
+        this.filterRoutes();
+      }
+    },
+    permissions(newVal, oldVal) {
+      // 在刷新页面，首次登录后，等待权限初始化后再过滤路由
+      if (newVal !== null && this.isAuthenticated) {
+        this.filterRoutes();
+      }
+    }
+  },
+};
 </script>
 
 <style scoped>

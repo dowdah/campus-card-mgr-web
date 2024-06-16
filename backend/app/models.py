@@ -8,6 +8,7 @@ import pandas as pd
 from flask import current_app
 from itsdangerous.url_safe import URLSafeTimedSerializer as Serializer
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.dialects.mysql import LONGTEXT
 
 from . import db
 
@@ -51,10 +52,18 @@ class Role(db.Model):
         else:
             return self.permissions & perm == perm
 
+    def to_json(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'default': self.default,
+            'permissions': self.permissions
+        }
+
     @staticmethod
     def insert_roles():
         roles = {
-            'User': [
+            '普通用户': [
                 Permission.LOGIN,
                 Permission.SELF_CHANGE_PASSWORD,
                 Permission.SELF_CHANGE_EMAIL,
@@ -62,7 +71,7 @@ class Role(db.Model):
                 Permission.SELF_CONSUME_CARD,
                 Permission.SELF_REPORT_LOST_CARD
             ],
-            'SchoolStaff': [
+            '学校管理员': [
                 Permission.LOGIN,
                 Permission.SELF_CHANGE_PASSWORD,
                 Permission.SELF_CHANGE_EMAIL,
@@ -82,11 +91,11 @@ class Role(db.Model):
                 Permission.ADD_USER,
                 Permission.DEL_REPORTS
             ],
-            'SiteOperator': [
+            '网站运营者': [
                 Permission.OPERATOR
             ]
         }
-        default_role = 'User'
+        default_role = '普通用户'
         for r in roles:
             role = Role.query.filter_by(name=r).first()
             if role is None:
@@ -122,6 +131,14 @@ class Permission:
     OPERATOR = 524288  # 操作员权限
     ADD_USER = 1048576  # 添加用户
     DEL_REPORTS = 2097152  # 删除报告
+
+    @staticmethod
+    def to_json():
+        d = dict()
+        for k, v in Permission.__dict__.items():
+            if not k.startswith('__') and not callable(v) and isinstance(v, int):
+                d[k] = v
+        return d
 
 
 class User(db.Model):
@@ -244,7 +261,7 @@ class User(db.Model):
             'created_at': self.formatted_created_at,
             'id': self.id,
             'email': self.email,
-            'role': self.role.name,
+            'role': self.role.to_json(),
             'confirmed': self.confirmed
         }
         if include_related:
@@ -456,7 +473,7 @@ class Transaction(db.Model):
 class FinancialReport(db.Model):
     __tablename__ = 'financial_reports'
     id = db.Column(db.Integer, primary_key=True)
-    json_data = db.Column(db.Text, nullable=True)
+    json_data = db.Column(LONGTEXT, nullable=True)
     xlsx_data = db.Column(db.LargeBinary, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow, index=True, nullable=False)
     xlsx_expiration = db.Column(db.Interval, nullable=True, default=datetime.timedelta(days=7))

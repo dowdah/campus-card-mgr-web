@@ -8,7 +8,7 @@
         </tr>
         <tr>
           <td>余额:</td>
-          <td>{{ card.balance }}</td>
+          <td>{{ card.balance }} ¥</td>
         </tr>
         <tr>
           <td>状态:</td>
@@ -55,12 +55,11 @@
             </tr>
             <tr v-for="transaction in responseData.card.transactions" :key="transaction.id" class="transaction">
               <td>{{ transaction.id }}</td>
-              <td>{{ transaction.amount }}</td>
+              <td>{{ transaction.amount }} ¥</td>
               <td>{{ transaction.created_at }}</td>
               <td>{{ transaction.original_balance }} ¥</td>
               <td>{{ transaction.current_balance }} ¥</td>
-              <td v-if="transaction.is_canceled">交易已取消</td>
-              <td v-else>正常</td>
+              <td>{{ transaction.status }}</td>
             </tr>
           </table>
         </div>
@@ -143,6 +142,15 @@ button:disabled {
   border-bottom: 1px solid #eee;
   padding-bottom: 10px;
   margin-bottom: 10px;
+  cursor: default;
+}
+
+.transaction:last-child {
+  border-bottom: none;
+}
+
+.transaction:hover {
+  background-color: #f9f9f9;
 }
 
 .transaction-list table {
@@ -256,7 +264,8 @@ export default {
         if (newVal && !this.fetchedTransactions) {
           this.fetchTransactions(this.currentPage, this.itemsPerPage);
         }
-      }
+      },
+      immediate: true
     }
   }
 };

@@ -26,11 +26,14 @@ def before_request():
         g.data = None
         g.files = None
     if g.data:
-        g.data = {k: v for k, v in g.data.items() if v}
+        g.data = {k: v for k, v in g.data.items() if v is not None}
 
 
-@v1_bp.route('/test', methods=['GET', 'POST'])
-def test():
-    # 测试用路由，生产环境中应删除
-    # return {'status': 'success', 'msg': g.temp}
-    return abort(403)
+@v1_bp.route('/permissions')
+def get_permission_info():
+    response_json = {
+        'success': True,
+        'code': 200,
+        'permissions': Permission.to_json()
+    }
+    return jsonify(response_json), response_json['code']

@@ -15,18 +15,23 @@ def reverse(string):
 
 @celery.task(name='app.fr_init_async', bind=True)
 def fr_init_async(self, fr_id):
+    d = dict()
     try:
         fr_obj = FinancialReport.query.get(fr_id)
         fr_obj.generate_json_data()
         fr_obj.generate_xlsx_data()
         db.session.add(fr_obj)
         db.session.commit()
-        return True
-    except:
+    except Exception as e:
         db.session.rollback()
         db.session.delete(FinancialReport.query.get(fr_id))
         db.session.commit()
-        return False
+        d['success'] = False
+        d['msg'] = str(e)
+    else:
+        d['success'] = True
+        d['msg'] = 'Report generated successfully'
+    return d
 
 
 @celery.task(name='app.send_email', bind=True)

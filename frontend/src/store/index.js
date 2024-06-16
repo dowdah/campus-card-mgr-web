@@ -5,16 +5,12 @@ import axios from 'axios';
 const store = createStore({
     state: {
         user: null,
-        isLoading: false
+        isLoading: false,
+        permissions: null,
+        isInitialized: false
     },
     mutations: {
         setUser(state, user) {
-            const roleTranslations = {
-                'SchoolStaff': '学校管理员',
-                'SiteOperator': '网站运营者',
-                'User': '普通用户'
-            };
-            user.role = roleTranslations[user.role] || user.role;
             state.user = user;
         },
         clearUser(state) {
@@ -22,6 +18,19 @@ const store = createStore({
         },
         setLoading(state, isLoading) {
             state.isLoading = isLoading;
+        },
+        setCardLost(state, cardId) {
+            const card = state.user.cards.find(card => card.id === cardId);
+            if (card) {
+                card.status = '已挂失';
+                card.is_lost = true;
+            }
+        },
+        setPermissions(state, permissions) {
+            state.permissions = permissions;
+        },
+        setInitialized(state, isInitialized) {
+            state.isInitialized = isInitialized;
         }
     },
     actions: {
@@ -35,6 +44,9 @@ const store = createStore({
                     localStorage.setItem('token', response.data.token);
                     axios.defaults.headers.common['Authorization'] = 'Basic ' + btoa(response.data.token + ':');
                     commit('setUser', response.data.user);
+                    if (store.state.permissions === null) {
+                        await store.dispatch('fetchPermissions');
+                    }
                 } else {
                     alert('登录失败：' + response.data.msg)
                 }
@@ -66,6 +78,9 @@ const store = createStore({
                 try {
                     const response = await axios.get(`${BASE_API_URL}/auth/me`);
                     commit('setUser', response.data.user);
+                    if (state.permissions === null) {
+                        await store.dispatch('fetchPermissions');
+                    }
                     if (response.data.token) {
                         // 如果后端返回了新的token，更新本地存储的token，并设置axios的默认请求头
                         // 后端是否返回新token，取决于 auth.py 中 ALLOW_TOKEN_REFRESH 的设置
@@ -86,6 +101,7 @@ const store = createStore({
             } else {
                 commit('setLoading', false);
             }
+            commit('setInitialized', true);
         },
         async resetPassword({commit}, payload) {
             commit('setLoading', true);
@@ -113,10 +129,31 @@ const store = createStore({
         },
         setLoading({commit}, isLoading) {
             commit('setLoading', isLoading);
+        },
+        async fetchPermissions({commit}) {
+            try {
+                const response = await axios.get(`${BASE_API_URL}/permissions`);
+                commit('setPermissions', response.data.permissions);
+            } catch (error) {
+                console.error('Fetch permissions error:', error);
+                throw error;
+            }
         }
     },
     getters: {
-        isAuthenticated: state => !!state.user
+        isAuthenticated: state => !!state.user,
+        cards: state => state.user ? state.user.cards : [],
+        hasPermission: function (state) {
+            return function (permission) {
+                const permissionNumber = state.permissions[permission];
+                if (permissionNumber === undefined || !store.getters.isAuthenticated) {
+                    return false;
+                } else {
+                    return (state.user.role.permissions & state.permissions['OPERATOR']) === state.permissions['OPERATOR'] ||
+                        (state.user.role.permissions & permissionNumber) === permissionNumber;
+                }
+            }
+        }
     }
 });
 
