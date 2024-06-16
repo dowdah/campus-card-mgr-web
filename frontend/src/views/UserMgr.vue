@@ -14,7 +14,7 @@
     {{ deleteUserData.responseData.msg }}
   </AlertWindow>
   <UserEditor v-if="modifyUserData.showModifyWindow" :user="modifyUserData.user"
-               @cancel="clearModifyUserData" @save="modifyUser">
+              @cancel="clearModifyUserData" @save="modifyUser">
   </UserEditor>
   <AlertWindow :show-alert="modifyUserData.responseData !== null"
                :title="modifyUserData.failed ? '修改失败' : '修改成功'"
