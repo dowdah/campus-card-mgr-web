@@ -271,7 +271,7 @@ input[type="date"].no-input::-webkit-calendar-picker-indicator {
 <script>
 import {mapActions, mapState, mapGetters} from 'vuex';
 import axios from 'axios';
-import {BASE_API_URL} from '@/config/constants';
+import {BASE_API_URL, ROLE_NAMES} from '@/config/constants';
 import ModalWindow from "../components/ModalWindow.vue";
 import AlertWindow from "../components/AlertWindow.vue";
 import UserEditor from "../components/UserEditor.vue";
@@ -291,7 +291,7 @@ export default {
       endDate: this.getToday(),
       roleSelection: 'all',
       immediateQuery: true,
-      role_names: ['普通用户', '学校管理员', '网站运营者'],
+      role_names: ROLE_NAMES,
       lazyInputs: {
         name: '',
         email: '',
