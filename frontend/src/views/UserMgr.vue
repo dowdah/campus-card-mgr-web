@@ -4,13 +4,22 @@
                 @confirm="deleteUser(deleteUserData.user.id)" @close="clearDeleteUserData">
     <template v-slot:default>
       确定要删除该用户(姓名: {{ deleteUserData.user.name }}，学号: {{
-          deleteUserData.user.student_id
-        }})吗？请注意你无法撤销删除操作！
+        deleteUserData.user.student_id
+      }})吗？请注意你无法撤销删除操作！
     </template>
   </modal-window>
-  <AlertWindow :show-alert="deleteUserData.responseData !== null" :title="deleteUserData.failed ? '删除失败' : '删除成功'"
+  <AlertWindow :show-alert="deleteUserData.responseData !== null"
+               :title="deleteUserData.failed ? '删除失败' : '删除成功'"
                @confirm="clearDeleteUserResponse">
     {{ deleteUserData.responseData.msg }}
+  </AlertWindow>
+  <UserEditor v-if="modifyUserData.showModifyWindow" :user="modifyUserData.user"
+               @cancel="clearModifyUserData" @save="modifyUser">
+  </UserEditor>
+  <AlertWindow :show-alert="modifyUserData.responseData !== null"
+               :title="modifyUserData.failed ? '修改失败' : '修改成功'"
+               @confirm="clearModifyUserResponse">
+    {{ modifyUserData.responseData.msg }}
   </AlertWindow>
   <div class="users-container">
     <h2 class="title">用户查询与管理</h2>
@@ -102,7 +111,13 @@
             <td>{{ user.role.name }}</td>
             <td>{{ user.comments === '' ? '无' : user.comments }}</td>
             <td>
-              <button @click="showDeleteModal(user)" class="btn btn-danger">删除</button>
+              <button @click="showUserEditor(user)" class="btn btn-primary" v-if="hasPermission('MODIFY_USER_INFO')">
+                修改
+              </button>
+              <button @click="showDeleteModal(user)" class="btn btn-danger" v-if="hasPermission('DEL_USER')">
+                删除
+              </button>
+              <template v-if="!(hasPermission('DEL_USER') || hasPermission('MODIFY_USER_INFO'))">无权限</template>
             </td>
           </tr>
           </tbody>
@@ -126,7 +141,7 @@ input[type="date"].no-input::-webkit-calendar-picker-indicator {
 }
 
 .users-container {
-  max-width: 1200px;
+  max-width: 1350px;
   margin: auto;
   padding: 20px;
   background-color: #f9f9f9;
@@ -254,15 +269,16 @@ input[type="date"].no-input::-webkit-calendar-picker-indicator {
 </style>
 
 <script>
-import {mapActions, mapState} from 'vuex';
+import {mapActions, mapState, mapGetters} from 'vuex';
 import axios from 'axios';
 import {BASE_API_URL} from '@/config/constants';
 import ModalWindow from "../components/ModalWindow.vue";
 import AlertWindow from "../components/AlertWindow.vue";
+import UserEditor from "../components/UserEditor.vue";
 
 export default {
   name: 'UserMgr',
-  components: {AlertWindow, ModalWindow},
+  components: {UserEditor, AlertWindow, ModalWindow},
   data() {
     return {
       responseData: {},
@@ -287,11 +303,18 @@ export default {
         responseData: null,
         failed: false,
         showConfirmWindow: false
+      },
+      modifyUserData: {
+        user: null,
+        responseData: null,
+        failed: false,
+        showModifyWindow: false
       }
     }
   },
   computed: {
     ...mapState(['isLoading', 'user']),
+    ...mapGetters(['hasPermission']),
     aDayBeforeEndDate() {
       const date = new Date(this.endDate);
       date.setDate(date.getDate() - 1);
@@ -381,9 +404,36 @@ export default {
       this.deleteUserData.showConfirmWindow = false;
       this.deleteUserData.user = null;
     },
-    clearDeleteUserResponse(){
+    clearDeleteUserResponse() {
       this.deleteUserData.responseData = null;
       this.deleteUserData.failed = false;
+    },
+    showUserEditor(user) {
+      this.modifyUserData.user = user;
+      this.modifyUserData.showModifyWindow = true;
+    },
+    clearModifyUserData() {
+      this.modifyUserData.showModifyWindow = false;
+      this.modifyUserData.user = null;
+    },
+    clearModifyUserResponse() {
+      this.modifyUserData.responseData = null;
+      this.modifyUserData.failed = false;
+    },
+    async modifyUser(user, userId) {
+      this.clearModifyUserData();
+      this.setLoading(true);
+      try {
+        const response = await axios.put(`${BASE_API_URL}/user/operate/${userId}`, user);
+        this.modifyUserData.responseData = response.data;
+        this.modifyUserData.failed = false;
+        await this.fetchUsers(this.currentPage, this.perPage);
+      } catch (error) {
+        this.modifyUserData.responseData = error.response.data;
+        this.modifyUserData.failed = true;
+      } finally {
+        this.setLoading(false);
+      }
     }
   },
   watch: {
