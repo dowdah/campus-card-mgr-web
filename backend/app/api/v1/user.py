@@ -120,7 +120,7 @@ def operate_user(id):
             response_json = {
                 'success': False,
                 'code': 400,
-                'msg': 'No data provided'
+                'msg': '未提供修改数据'
             }
             return jsonify(response_json), response_json['code']
         if g.current_user.can(Permission.MODIFY_USER_INFO):
@@ -133,30 +133,38 @@ def operate_user(id):
                     response_json = {
                         'success': False,
                         'code': 400,
-                        'msg': 'Unacceptable attributes: ' + ', '.join(unaccepted_attrs)
+                        'msg': '不可修改的参数: ' + ', '.join(unaccepted_attrs)
                     }
                 else:
-                    for k, v in g.data.items():
-                        setattr(user, k, v)
-                    else:
-                        db.session.add(user)
-                        db.session.commit()
+                    try:
+                        for k, v in g.data.items():
+                            setattr(user, k, v)
+                        else:
+                            db.session.add(user)
+                            db.session.commit()
+                            response_json = {
+                                'success': True,
+                                'code': 200,
+                                'msg': '修改成功。'
+                            }
+                    except Exception as e:
+                        db.session.rollback()
                         response_json = {
-                            'success': True,
-                            'code': 200,
-                            'msg': 'User updated successfully'
+                            'success': False,
+                            'code': 400,
+                            'msg': '检查数据是否与已有用户重复。'
                         }
             else:
                 response_json = {
                     'success': False,
                     'code': 404,
-                    'msg': 'User not found'
+                    'msg': '用户不存在。'
                 }
         else:
             response_json = {
                 'success': False,
                 'code': 403,
-                'msg': 'Permission denied'
+                'msg': '你没有权限修改用户信息。'
             }
     elif request.method == 'DELETE':
         if g.current_user.can(Permission.DEL_USER):
