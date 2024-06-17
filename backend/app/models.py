@@ -396,7 +396,8 @@ class Card(db.Model):
             'expires_at': self.formatted_expires_at,
             'is_active': self.is_active,
             'is_lost': self.is_lost,
-            'is_expired': self.is_expired
+            'is_expired': self.is_expired,
+            'is_banned': self.is_banned
         }
         if include_related:
             related_json = {
