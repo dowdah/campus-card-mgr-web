@@ -286,7 +286,6 @@ export default {
       perPage: 10,
       requestFailed: false,
       fetchedUsers: false,
-      selectedCardId: '',
       startDate: null,
       endDate: this.getToday(),
       roleSelection: 'all',
