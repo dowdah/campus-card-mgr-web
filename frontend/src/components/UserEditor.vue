@@ -161,12 +161,14 @@ export default {
   },
   methods: {
     handleSubmit() {
-      this.userData.confirmed = this.userData.confirmed === 'true';
+      if (typeof this.userData.confirmed === 'string') {
+        this.userData.confirmed = this.userData.confirmed === 'true';
+      }
       this.$emit('save', this.userData, this.user.id);
     },
     handleCancel() {
       this.$emit('cancel');
     },
-  },
+  }
 };
 </script>
