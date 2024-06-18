@@ -80,54 +80,56 @@
     <div v-if="requestFailed" class="alert alert-danger">
       <p>查询失败: {{ responseData.msg }}</p>
     </div>
-    <div v-else-if="fetchedUsers">
+    <template v-else-if="fetchedUsers">
       <div class="results-summary">
         <p>用户数量: {{ responseData.total }}</p>
         <p>页:（{{ currentPage }}/{{ responseData.pages }})</p>
       </div>
-      <div class="users-table">
-        <table class="table">
-          <thead>
-          <tr>
-            <th>ID</th>
-            <th>学号</th>
-            <th>创建时间</th>
-            <th>邮箱</th>
-            <th>邮箱已确认</th>
-            <th>姓名</th>
-            <th>角色</th>
-            <th>备注</th>
-            <th>操作</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr v-for="user in responseData.users" :key="user.id">
-            <td>{{ user.id }}</td>
-            <td>{{ user.student_id }}</td>
-            <td>{{ user.created_at }}</td>
-            <td>{{ user.email }}</td>
-            <td>{{ user.confirmed ? '是' : '否' }}</td>
-            <td>{{ user.name }}</td>
-            <td>{{ user.role.name }}</td>
-            <td>{{ user.comments === '' ? '无' : user.comments }}</td>
-            <td>
-              <button @click="showUserEditor(user)" class="btn btn-primary" v-if="hasPermission('MODIFY_USER_INFO')">
-                修改
-              </button>
-              <button @click="showDeleteModal(user)" class="btn btn-danger" v-if="hasPermission('DEL_USER')">
-                删除
-              </button>
-              <template v-if="!(hasPermission('DEL_USER') || hasPermission('MODIFY_USER_INFO'))">无权限</template>
-            </td>
-          </tr>
-          </tbody>
-        </table>
+      <div style="width: 100%;overflow-x: auto">
+        <div class="users-table">
+          <table class="table">
+            <thead>
+            <tr>
+              <th>ID</th>
+              <th>学号</th>
+              <th>创建时间</th>
+              <th>邮箱</th>
+              <th>邮箱已确认</th>
+              <th>姓名</th>
+              <th>角色</th>
+              <th>备注</th>
+              <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="user in responseData.users" :key="user.id">
+              <td>{{ user.id }}</td>
+              <td>{{ user.student_id }}</td>
+              <td>{{ user.created_at }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.confirmed ? '是' : '否' }}</td>
+              <td>{{ user.name }}</td>
+              <td>{{ user.role.name }}</td>
+              <td>{{ user.comments === '' ? '无' : user.comments }}</td>
+              <td>
+                <button @click="showUserEditor(user)" class="btn btn-primary" v-if="hasPermission('MODIFY_USER_INFO')">
+                  修改
+                </button>
+                <button @click="showDeleteModal(user)" class="btn btn-danger" v-if="hasPermission('DEL_USER')">
+                  删除
+                </button>
+                <template v-if="!(hasPermission('DEL_USER') || hasPermission('MODIFY_USER_INFO'))">无权限</template>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
       <div class="pagination">
         <button @click="prevPage" :disabled="!responseData.has_prev" class="btn btn-secondary">上一页</button>
         <button @click="nextPage" :disabled="!responseData.has_next" class="btn btn-secondary">下一页</button>
       </div>
-    </div>
+    </template>
   </div>
 </template>
 
@@ -141,7 +143,7 @@ input[type="date"].no-input::-webkit-calendar-picker-indicator {
 }
 
 .users-container {
-  max-width: 1350px;
+  max-width: 1200px;
   margin: auto;
   padding: 20px;
   background-color: #f9f9f9;
@@ -223,6 +225,8 @@ input[type="date"].no-input::-webkit-calendar-picker-indicator {
 
 .users-table {
   margin-top: 20px;
+  white-space: nowrap;
+  width: max-content;
 }
 
 .table {
@@ -266,12 +270,16 @@ input[type="date"].no-input::-webkit-calendar-picker-indicator {
   font-size: 14px;
   color: #666;
 }
+
+.table td button {
+  margin: 0 5px;
+}
 </style>
 
 <script>
 import {mapActions, mapState, mapGetters} from 'vuex';
 import axios from 'axios';
-import {BASE_API_URL} from '@/config/constants';
+import {BASE_API_URL, ROLE_NAMES} from '@/config/constants';
 import ModalWindow from "../components/ModalWindow.vue";
 import AlertWindow from "../components/AlertWindow.vue";
 import UserEditor from "../components/UserEditor.vue";
@@ -286,12 +294,11 @@ export default {
       perPage: 10,
       requestFailed: false,
       fetchedUsers: false,
-      selectedCardId: '',
       startDate: null,
       endDate: this.getToday(),
       roleSelection: 'all',
       immediateQuery: true,
-      role_names: ['普通用户', '学校管理员', '网站运营者'],
+      role_names: ROLE_NAMES,
       lazyInputs: {
         name: '',
         email: '',

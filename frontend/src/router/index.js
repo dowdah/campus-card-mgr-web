@@ -6,6 +6,7 @@ import store from '../store';
 import Transactions from "../views/Transactions.vue";
 import TransactionSimulation from "../views/TransactionSimulation.vue";
 import UserMgr from "../views/UserMgr.vue";
+import CardMgr from "../views/CardMgr.vue";
 
 const routes = [
     {path: '/', name: '主页', component: Home},
@@ -17,6 +18,17 @@ const routes = [
         path: '/user-mgr',
         name: '用户管理',
         component: UserMgr,
+        meta: {
+            requiresAuth: true,
+            requiresPermission: [
+                'VIEW_USER_INFO'
+            ]
+        }
+    },
+    {
+        path: '/card-mgr',
+        name: '一卡通管理',
+        component: CardMgr,
         meta: {
             requiresAuth: true,
             requiresPermission: [

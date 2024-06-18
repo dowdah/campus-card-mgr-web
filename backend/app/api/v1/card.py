@@ -2,7 +2,7 @@ from flask import jsonify, request, g, abort, current_app, Blueprint
 from ...models import User, Permission, Card, Transaction
 from ... import db
 from ...decorators import permission_required
-
+from datetime import datetime
 
 card_bp = Blueprint('card', __name__)
 EDITABLE_ATTRS = ['is_banned', 'is_lost', 'balance']  # 操作人员可修改的一卡通属性
@@ -12,11 +12,20 @@ EDITABLE_ATTRS = ['is_banned', 'is_lost', 'balance']  # 操作人员可修改的
 @permission_required(Permission.VIEW_USER_INFO)
 def get_cards():
     # 查询所有符合条件的一卡通并分页返回
+    cards = None
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
+    sort_by = request.args.get('sort_by', 'id', type=str)  # 如果 sort_by 不是 User 的属性则默认为 'id'
+    sort_order = request.args.get('sort_order', 'asc', type=str)  # 如果 sort_order 不是 'desc' 则默认为 'asc'
     if request.method == 'GET':
-        pagination = Card.query.order_by(Card.id.desc()).paginate(
-            page=page, per_page=per_page, error_out=False)
+        try:
+            query = Card.query.order_by(
+                getattr(Card, sort_by).desc() if sort_order == 'desc' else getattr(Card, sort_by).asc())
+        except AttributeError:
+            sort_by = 'id'
+            query = Card.query.order_by(
+                getattr(Card, sort_by).desc() if sort_order == 'desc' else getattr(Card, sort_by).asc())
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
         cards = pagination.items
     elif request.method == 'POST':
         if g.data is None:
@@ -26,18 +35,85 @@ def get_cards():
                 'msg': 'No data provided'
             }
             return jsonify(response_json), response_json['code']
-        query = Card.query.order_by(Card.id.desc())
+        start_created_date_str = g.data.get('start_created_date', None)
+        end_created_date_str = g.data.get('end_created_date', None)
+        start_expires_date_str = g.data.get('start_expires_date', None)
+        end_expires_date_str = g.data.get('end_expires_date', None)
+        try:
+            query = Card.query.order_by(
+                getattr(Card, sort_by).desc() if sort_order == 'desc' else getattr(Card, sort_by).asc())
+        except AttributeError:
+            sort_by = 'id'
+            query = Card.query.order_by(
+                getattr(Card, sort_by).desc() if sort_order == 'desc' else getattr(Card, sort_by).asc())
         try:
             for k, v in g.data.items():
-                query = query.filter(getattr(Card, k) == v)
-        except AttributeError:
+                if k.startswith('user_'):
+                    user_attr = k[k.find('_') + 1:]
+                    query = query.filter(Card.user.has(getattr(User, user_attr).like('%' + v + '%')))
+                elif k.startswith('balance_'):
+                    if k == 'balance_gt':
+                        query = query.filter(Card.balance > v)
+                    elif k == 'balance_lt':
+                        query = query.filter(Card.balance < v)
+                    else:
+                        raise AttributeError
+                elif k in ['start_created_date', 'end_created_date', 'start_expires_date', 'end_expires_date']:
+                    continue
+                else:
+                    query = query.filter(getattr(Card, k) == v)
+        except AttributeError as e:
             response_json = {
                 'success': False,
                 'code': 400,
-                'msg': 'Invalid parameter'
+                'msg': 'Invalid parameter: ' + str(e)
             }
             return jsonify(response_json), response_json['code']
         else:
+            if start_created_date_str:
+                try:
+                    start_created_date = datetime.strptime(start_created_date_str, '%Y-%m-%d')
+                    query = query.filter(Card.created_at >= start_created_date)
+                except ValueError:
+                    response_json = {
+                        'success': False,
+                        'code': 400,
+                        'msg': 'Invalid date format. Use YYYY-MM-DD'
+                    }
+                    return jsonify(response_json), response_json['code']
+            if end_created_date_str:
+                try:
+                    end_created_date = datetime.strptime(end_created_date_str, '%Y-%m-%d')
+                    query = query.filter(Card.created_at <= end_created_date)
+                except ValueError:
+                    response_json = {
+                        'success': False,
+                        'code': 400,
+                        'msg': 'Invalid date format. Use YYYY-MM-DD'
+                    }
+                    return jsonify(response_json), response_json['code']
+            if start_expires_date_str:
+                try:
+                    start_expires_date = datetime.strptime(start_expires_date_str, '%Y-%m-%d')
+                    query = query.filter(Card.expires_at >= start_expires_date)
+                except ValueError:
+                    response_json = {
+                        'success': False,
+                        'code': 400,
+                        'msg': 'Invalid date format. Use YYYY-MM-DD'
+                    }
+                    return jsonify(response_json), response_json['code']
+            if end_expires_date_str:
+                try:
+                    end_expires_date = datetime.strptime(end_expires_date_str, '%Y-%m-%d')
+                    query = query.filter(Card.expires_at <= end_expires_date)
+                except ValueError:
+                    response_json = {
+                        'success': False,
+                        'code': 400,
+                        'msg': 'Invalid date format. Use YYYY-MM-DD'
+                    }
+                    return jsonify(response_json), response_json['code']
             pagination = query.paginate(page=page, per_page=per_page, error_out=False)
             cards = pagination.items
     if cards:
@@ -57,7 +133,7 @@ def get_cards():
         response_json = {
             'success': False,
             'code': 404,
-            'msg': 'No card found'
+            'msg': '没有符合条件的一卡通。'
         }
     return jsonify(response_json), response_json['code']
 
@@ -125,7 +201,7 @@ def set_card(id):
             response_json = {
                 'success': True,
                 'code': 200,
-                'msg': 'Card updated successfully'
+                'msg': '卡片信息更新成功。'
             }
     return jsonify(response_json), response_json['code']
 
@@ -156,37 +232,43 @@ def renew_card(id):
             response_json = {
                 'success': False,
                 'code': 400,
-                'msg': 'Invalid parameter: ' + str(e)
+                'msg': '不合法的参数: ' + str(e)
             }
             return jsonify(response_json), response_json['code']
         if renew_days == 0:
             response_json = {
                 'success': False,
                 'code': 400,
-                'msg': 'Invalid parameter'
+                'msg': '参数不合法。'
             }
             return jsonify(response_json), response_json['code']
         else:
             card = Card.query.filter_by(id=id).first()
             if card:
-                if card.is_active:
-                    card.renew(renew_days)
-                    response_json = {
-                        'success': True,
-                        'code': 200,
-                        'msg': 'Card renewed successfully'
-                    }
-                else:
-                    response_json = {
-                        'success': False,
-                        'code': 400,
-                        'msg': '无法延长状态为%s的一卡通有效期' % card.status
-                    }
+                # if card.is_active:
+                #     card.renew(renew_days)
+                #     response_json = {
+                #         'success': True,
+                #         'code': 200,
+                #         'msg': 'Card renewed successfully'
+                #     }
+                # else:
+                #     response_json = {
+                #         'success': False,
+                #         'code': 400,
+                #         'msg': '无法延长状态为%s的一卡通有效期' % card.status
+                #     }
+                card.renew(renew_days)
+                response_json = {
+                    'success': True,
+                    'code': 200,
+                    'msg': '卡片延期成功。'
+                }
             else:
                 response_json = {
                     'success': False,
                     'code': 404,
-                    'msg': 'Card not found'
+                    'msg': '未找到该一卡通。'
                 }
             return jsonify(response_json), response_json['code']
 
@@ -225,13 +307,13 @@ def delete_card(id):
         response_json = {
             'success': True,
             'code': 200,
-            'msg': 'Card deleted successfully'
+            'msg': '卡片删除成功。'
         }
     else:
         response_json = {
             'success': False,
             'code': 404,
-            'msg': 'Card not found'
+            'msg': '未找到该一卡通。'
         }
     return jsonify(response_json), response_json['code']
 
@@ -273,7 +355,7 @@ def get_my_card(id):
         response_json = {
             'success': False,
             'code': 404,
-            'msg': 'Card not found'
+            'msg': '未找到该一卡通。'
         }
     return jsonify(response_json), response_json['code']
 
@@ -286,7 +368,7 @@ def report_card_lost(id):
             response_json = {
                 'success': False,
                 'code': 400,
-                'msg': 'Card already lost'
+                'msg': '卡片已被挂失。'
             }
         else:
             card.is_lost = True
@@ -295,12 +377,12 @@ def report_card_lost(id):
             response_json = {
                 'success': True,
                 'code': 200,
-                'msg': 'Card reported lost successfully'
+                'msg': '卡片挂失成功。'
             }
     else:
         response_json = {
             'success': False,
             'code': 404,
-            'msg': 'Card not found'
+            'msg': '未找到该一卡通。'
         }
     return jsonify(response_json), response_json['code']
