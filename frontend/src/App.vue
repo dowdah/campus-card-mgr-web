@@ -59,4 +59,21 @@ export default {
   color: #2c3e50;
   margin-top: 60px;
 }
+
+::-webkit-scrollbar {
+  height: 8px; /* 设置滚动条的高度 */
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1; /* 滚动条轨道背景色 */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888; /* 滚动条滑块背景色 */
+  border-radius: 4px; /* 滚动条滑块圆角 */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555; /* 滚动条滑块悬停时背景色 */
+}
 </style>
