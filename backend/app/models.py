@@ -9,6 +9,7 @@ from flask import current_app
 from itsdangerous.url_safe import URLSafeTimedSerializer as Serializer
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.dialects.mysql import LONGTEXT
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from . import db
 
@@ -310,7 +311,7 @@ class Card(db.Model):
     def formatted_expires_at(self):
         return self.expires_at.strftime(OUTPUT_TIME_FORMAT)
 
-    @property
+    @hybrid_property
     def balance(self):
         return self._balance
 
@@ -357,7 +358,7 @@ class Card(db.Model):
     def is_active(self):
         return not (self.is_banned or self.is_expired or self.is_lost)
 
-    @property
+    @hybrid_property
     def is_expired(self):
         return self.expires_at < datetime.datetime.utcnow()
 
@@ -396,7 +397,8 @@ class Card(db.Model):
             'expires_at': self.formatted_expires_at,
             'is_active': self.is_active,
             'is_lost': self.is_lost,
-            'is_expired': self.is_expired
+            'is_expired': self.is_expired,
+            'is_banned': self.is_banned
         }
         if include_related:
             related_json = {

@@ -18,6 +18,10 @@
           <td>创建时间:</td>
           <td>{{ card.created_at }}</td>
         </tr>
+        <tr>
+          <td>过期时间:</td>
+          <td>{{ card.expires_at }}</td>
+        </tr>
         <tr v-if="fetchedTransactions">
           <td>交易数量:</td>
           <td>{{ responseData.total }}</td>
