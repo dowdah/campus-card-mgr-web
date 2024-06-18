@@ -21,7 +21,15 @@
                @confirm="clearModifyCardResponse">
     {{ modifyCardData.responseData.msg }}
   </AlertWindow>
-  <div class="users-container">
+  <CardRenewWindow v-if="renewCardData.showRenewWindow" :card="renewCardData.card"
+                   @close="clearRenewCardData" @confirm="renewCard">
+  </CardRenewWindow>
+  <AlertWindow :show-alert="renewCardData.responseData !== null"
+               :title="renewCardData.failed ? '延期失败' : '延期成功'"
+               @confirm="clearRenewCardResponse">
+    {{ renewCardData.responseData.msg }}
+  </AlertWindow>
+  <div class="cards-container">
     <h2 class="title">一卡通查询与管理</h2>
     <p class="hint">如果遇到性能问题，取消勾选“立即查询”</p>
     <div class="filters-group">
@@ -55,6 +63,11 @@
         <input type="number" id="balanceLt" v-model.lazy="queryInputs.floats.balanceLt"
                :min="queryInputs.floats.balanceGt" step="0.01"
                class="form-control" @blur="updateValue('floats.balanceLt', $event)">
+      </div>
+      <div class="form-group">
+        <label for="id">卡号</label>
+        <input type="text" id="id" v-model.lazy="queryInputs.ints.id" class="form-control"
+               @blur="updateValue('ints.id', $event)">
       </div>
       <div class="form-group">
         <label for="isBanned">是否禁用</label>
@@ -118,64 +131,69 @@
       <div v-if="requestFailed" class="alert alert-danger">
         <p>查询失败: {{ responseData.msg }}</p>
       </div>
-      <div v-else-if="fetchedCards">
+      <template v-else-if="fetchedCards">
         <div class="results-summary">
           <p>卡片数量: {{ responseData.total }}</p>
           <p>页:（{{ currentPage }}/{{ responseData.pages }})</p>
         </div>
-        <div class="cards-table">
-          <table class="table">
-            <thead>
-            <tr>
-              <th>持卡者ID</th>
-              <th>持卡者学号</th>
-              <th>持卡者姓名</th>
-              <th>持卡者邮箱</th>
-              <th>卡号</th>
-              <th>创建时间</th>
-              <th>过期时间</th>
-              <th>余额</th>
-              <th>是否过期</th>
-              <th>是否挂失</th>
-              <th>是否禁用</th>
-              <th>操作</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr v-for="card in responseData.cards" :key="card.id">
-              <td>{{ card.user.id }}</td>
-              <td>{{ card.user.student_id }}</td>
-              <td>{{ card.user.name }}</td>
-              <td>{{ card.user.email }}</td>
-              <td>{{ card.id }}</td>
-              <td>{{ card.created_at }}</td>
-              <td>{{ card.expires_at }}</td>
-              <td>{{ card.balance }}</td>
-              <td>{{ card.is_expired ? '是' : '否' }}</td>
-              <td>{{ card.is_lost ? '是' : '否' }}</td>
-              <td>{{ card.is_banned ? '是' : '否' }}</td>
-              <td>
-                <button @click="showCardEditor(card)" class="btn btn-primary"
-                        v-if="hasPermission('CHANGE_CARD_STATUS') || hasPermission('CHANGE_CARD_BALANCE')">
-                  修改
-                </button>
-                <button @click="showDeleteModal(card)" class="btn btn-danger" v-if="hasPermission('DEL_CARD')">
-                  删除
-                </button>
-                <template
-                    v-if="!(hasPermission('DEL_CARD') || hasPermission('CHANGE_CARD_STATUS') || hasPermission('CHANGE_CARD_BALANCE'))">
-                  无权限
-                </template>
-              </td>
-            </tr>
-            </tbody>
-          </table>
+        <div style="width: 100%;overflow-x: auto">
+          <div class="cards-table">
+            <table class="table">
+              <thead>
+              <tr>
+                <th>持卡者ID</th>
+                <th>持卡者学号</th>
+                <th>持卡者姓名</th>
+                <th>持卡者邮箱</th>
+                <th>卡号</th>
+                <th>创建时间</th>
+                <th>过期时间</th>
+                <th>余额</th>
+                <th>是否过期</th>
+                <th>是否挂失</th>
+                <th>是否禁用</th>
+                <th>操作</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr v-for="card in responseData.cards" :key="card.id">
+                <td>{{ card.user.id }}</td>
+                <td>{{ card.user.student_id }}</td>
+                <td>{{ card.user.name }}</td>
+                <td>{{ card.user.email }}</td>
+                <td>{{ card.id }}</td>
+                <td>{{ card.created_at }}</td>
+                <td>{{ card.expires_at }}</td>
+                <td>{{ card.balance }}</td>
+                <td>{{ card.is_expired ? '是' : '否' }}</td>
+                <td>{{ card.is_lost ? '是' : '否' }}</td>
+                <td>{{ card.is_banned ? '是' : '否' }}</td>
+                <td>
+                  <button @click="showCardEditor(card)" class="btn btn-primary"
+                          v-if="hasPermission('CHANGE_CARD_STATUS') || hasPermission('CHANGE_CARD_BALANCE')">
+                    修改
+                  </button>
+                  <button @click="showRenewWindow(card)" class="btn btn-primary" v-if="hasPermission('RENEW_CARD')">
+                    延期
+                  </button>
+                  <button @click="showDeleteModal(card)" class="btn btn-danger" v-if="hasPermission('DEL_CARD')">
+                    删除
+                  </button>
+                  <template
+                      v-if="!(hasPermission('DEL_CARD') || hasPermission('CHANGE_CARD_STATUS') || hasPermission('CHANGE_CARD_BALANCE'))">
+                    无权限
+                  </template>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
         <div class="pagination">
           <button @click="prevPage" :disabled="!responseData.has_prev" class="btn btn-secondary">上一页</button>
           <button @click="nextPage" :disabled="!responseData.has_next" class="btn btn-secondary">下一页</button>
         </div>
-      </div>
+      </template>
     </div>
   </div>
 </template>
@@ -189,8 +207,8 @@ input[type="date"].no-input::-webkit-calendar-picker-indicator {
   pointer-events: auto;
 }
 
-.users-container {
-  max-width: 1350px;
+.cards-container {
+  max-width: 1200px;
   margin: auto;
   padding: 20px;
   background-color: #f9f9f9;
@@ -270,8 +288,10 @@ input[type="date"].no-input::-webkit-calendar-picker-indicator {
   gap: 10px;
 }
 
-.users-table {
+.cards-table {
   margin-top: 20px;
+  white-space: nowrap;
+  width: max-content;
 }
 
 .table {
@@ -286,6 +306,10 @@ input[type="date"].no-input::-webkit-calendar-picker-indicator {
   padding: 10px;
   border: 1px solid #ccc;
   text-align: center;
+}
+
+.table td button {
+  margin: 0 5px;
 }
 
 .table th {
@@ -324,10 +348,11 @@ import {BASE_API_URL} from '@/config/constants';
 import ModalWindow from "../components/ModalWindow.vue";
 import AlertWindow from "../components/AlertWindow.vue";
 import CardEditor from "../components/CardEditor.vue";
+import CardRenewWindow from "../components/CardRenewWindow.vue";
 
 export default {
   name: 'CardMgr',
-  components: {CardEditor, AlertWindow, ModalWindow},
+  components: {CardEditor, AlertWindow, ModalWindow, CardRenewWindow},
   data() {
     return {
       responseData: {},
@@ -373,6 +398,12 @@ export default {
         responseData: null,
         failed: false,
         showModifyWindow: false
+      },
+      renewCardData: {
+        card: null,
+        responseData: null,
+        failed: false,
+        showRenewWindow: false
       }
     }
   },
@@ -555,6 +586,33 @@ export default {
           email: '',
           name: ''
         }
+      }
+    },
+    showRenewWindow(card) {
+      this.renewCardData.card = card;
+      this.renewCardData.showRenewWindow = true;
+    },
+    clearRenewCardData() {
+      this.renewCardData.card = null;
+      this.renewCardData.showRenewWindow = false;
+    },
+    clearRenewCardResponse() {
+      this.renewCardData.responseData = null;
+      this.renewCardData.failed = false;
+    },
+    async renewCard(card, cardId) {
+      this.clearRenewCardData();
+      this.setLoading(true);
+      try {
+        const response = await axios.put(`${BASE_API_URL}/card/renew/${cardId}`, card);
+        this.renewCardData.responseData = response.data;
+        this.renewCardData.failed = false;
+        await this.fetchCards(this.currentPage, this.perPage);
+      } catch (error) {
+        this.renewCardData.responseData = error.response.data;
+        this.renewCardData.failed = true;
+      } finally {
+        this.setLoading(false);
       }
     }
   },
