@@ -93,7 +93,7 @@ def get_transactions():
         response_json = {
             'success': True,
             'code': 200,
-            'transactions': [transaction.to_json() for transaction in transactions],
+            'transactions': [transaction.to_json(include_sensitive=True) for transaction in transactions],
             'total': pagination.total,
             'pages': pagination.pages,
             'current_page': pagination.page,
