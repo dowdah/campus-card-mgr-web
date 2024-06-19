@@ -15,7 +15,7 @@ def get_cards():
     cards = None
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
-    sort_by = request.args.get('sort_by', 'id', type=str)  # 如果 sort_by 不是 User 的属性则默认为 'id'
+    sort_by = request.args.get('sort_by', 'id', type=str)  # 如果 sort_by 不是 Card 的属性则默认为 'id'
     sort_order = request.args.get('sort_order', 'asc', type=str)  # 如果 sort_order 不是 'desc' 则默认为 'asc'
     if request.method == 'GET':
         try:
@@ -57,7 +57,7 @@ def get_cards():
                     elif k == 'balance_lt':
                         query = query.filter(Card.balance < v)
                     else:
-                        raise AttributeError
+                        raise AttributeError(k)
                 elif k in ['start_created_date', 'end_created_date', 'start_expires_date', 'end_expires_date']:
                     continue
                 else:
