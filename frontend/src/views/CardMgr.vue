@@ -56,7 +56,8 @@
       <div class="form-group">
         <label for="balanceGt">余额大于</label>
         <input type="number" id="balanceGt" v-model.lazy="queryInputs.floats.balanceGt" min="0" step="0.01"
-               class="form-control" @blur="updateValue('floats.balanceGt', $event)">
+               :max="queryInputs.floats.balanceLt" class="form-control"
+               @blur="updateValue('floats.balanceGt', $event)">
       </div>
       <div class="form-group">
         <label for="balanceLt">余额小于</label>
@@ -127,10 +128,10 @@
       </div>
     </div>
     <div class="btn-group">
-    <button @click="resetQueryInputs" class="btn btn-primary">重置查询条件</button>
-    <button v-if="!immediateQuery" @click="queryHandler" :disabled="isLoading" class="btn btn-primary btn-query">查询
-    </button>
-      </div>
+      <button @click="resetQueryInputs" class="btn btn-primary">重置查询条件</button>
+      <button v-if="!immediateQuery" @click="queryHandler" :disabled="isLoading" class="btn btn-primary btn-query">查询
+      </button>
+    </div>
     <div v-if="requestFailed" class="alert alert-danger">
       <p>查询失败: {{ responseData.msg }}</p>
     </div>
