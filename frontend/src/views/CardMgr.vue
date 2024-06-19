@@ -617,9 +617,14 @@ export default {
     }
   },
   watch: {
-    endDate: function (newVal, oldVal) {
-      if (newVal <= this.startDate) {
-        this.startDate = this.aDayBeforeEndDate
+    'queryInputs.strings.endCreatedDate': function (newVal, oldVal) {
+      if (newVal && newVal <= this.queryInputs.strings.startCreatedDate) {
+        this.queryInputs.strings.startCreatedDate = this.aDayBeforeEndCreatedDate;
+      }
+    },
+    'queryInputs.strings.endExpiresDate': function (newVal, oldVal) {
+      if (newVal && newVal <= this.queryInputs.strings.startExpiresDate) {
+        this.queryInputs.strings.startExpiresDate = this.aDayBeforeEndExpiresDate;
       }
     },
     currentPage: {
