@@ -31,7 +31,7 @@
       <div class="form-group">
         <label for="amountGt">交易额大于</label>
         <input type="number" id="amountGt" v-model.lazy="queryInputs.floats.amountGt" min="0" step="0.01"
-               class="form-control" @blur="updateValue('floats.amountGt', $event)">
+               :max="queryInputs.floats.amountLt" class="form-control" @blur="updateValue('floats.amountGt', $event)">
       </div>
       <div class="form-group">
         <label for="amountLt">交易额小于</label>
