@@ -7,6 +7,7 @@ import Transactions from "../views/Transactions.vue";
 import TransactionSimulation from "../views/TransactionSimulation.vue";
 import UserMgr from "../views/UserMgr.vue";
 import CardMgr from "../views/CardMgr.vue";
+import TransactionMgr from "../views/TransactionMgr.vue";
 
 const routes = [
     {path: '/', name: '主页', component: Home},
@@ -29,6 +30,17 @@ const routes = [
         path: '/card-mgr',
         name: '一卡通管理',
         component: CardMgr,
+        meta: {
+            requiresAuth: true,
+            requiresPermission: [
+                'VIEW_USER_INFO'
+            ]
+        }
+    },
+    {
+        path: '/transaction-mgr',
+        name: '交易管理',
+        component: TransactionMgr,
         meta: {
             requiresAuth: true,
             requiresPermission: [
