@@ -125,76 +125,78 @@
         <label for="immediateQuery">立即查询</label>
         <input type="checkbox" id="immediateQuery" v-model="immediateQuery" class="form-control">
       </div>
-      <button @click="resetQueryInputs" class="btn btn-primary">重置查询条件</button>
-      <button v-if="!immediateQuery" @click="queryHandler" :disabled="isLoading" class="btn btn-primary query-btn">查询
-      </button>
-      <div v-if="requestFailed" class="alert alert-danger">
-        <p>查询失败: {{ responseData.msg }}</p>
-      </div>
-      <template v-else-if="fetchedCards">
-        <div class="results-summary">
-          <p>卡片数量: {{ responseData.total }}</p>
-          <p>页:（{{ currentPage }}/{{ responseData.pages }})</p>
-        </div>
-        <div style="width: 100%;overflow-x: auto">
-          <div class="cards-table">
-            <table class="table">
-              <thead>
-              <tr>
-                <th>持卡者ID</th>
-                <th>持卡者学号</th>
-                <th>持卡者姓名</th>
-                <th>持卡者邮箱</th>
-                <th>卡号</th>
-                <th>创建时间</th>
-                <th>过期时间</th>
-                <th>余额</th>
-                <th>是否过期</th>
-                <th>是否挂失</th>
-                <th>是否禁用</th>
-                <th>操作</th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr v-for="card in responseData.cards" :key="card.id">
-                <td>{{ card.user.id }}</td>
-                <td>{{ card.user.student_id }}</td>
-                <td>{{ card.user.name }}</td>
-                <td>{{ card.user.email }}</td>
-                <td>{{ card.id }}</td>
-                <td>{{ card.created_at }}</td>
-                <td>{{ card.expires_at }}</td>
-                <td>{{ card.balance }}</td>
-                <td>{{ card.is_expired ? '是' : '否' }}</td>
-                <td>{{ card.is_lost ? '是' : '否' }}</td>
-                <td>{{ card.is_banned ? '是' : '否' }}</td>
-                <td>
-                  <button @click="showCardEditor(card)" class="btn btn-primary"
-                          v-if="hasPermission('CHANGE_CARD_STATUS') || hasPermission('CHANGE_CARD_BALANCE')">
-                    修改
-                  </button>
-                  <button @click="showRenewWindow(card)" class="btn btn-primary" v-if="hasPermission('RENEW_CARD')">
-                    延期
-                  </button>
-                  <button @click="showDeleteModal(card)" class="btn btn-danger" v-if="hasPermission('DEL_CARD')">
-                    删除
-                  </button>
-                  <template
-                      v-if="!(hasPermission('DEL_CARD') || hasPermission('CHANGE_CARD_STATUS') || hasPermission('CHANGE_CARD_BALANCE'))">
-                    无权限
-                  </template>
-                </td>
-              </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div class="pagination">
-          <button @click="prevPage" :disabled="!responseData.has_prev" class="btn btn-secondary">上一页</button>
-          <button @click="nextPage" :disabled="!responseData.has_next" class="btn btn-secondary">下一页</button>
-        </div>
-      </template>
     </div>
+    <div class="btn-group">
+    <button @click="resetQueryInputs" class="btn btn-primary">重置查询条件</button>
+    <button v-if="!immediateQuery" @click="queryHandler" :disabled="isLoading" class="btn btn-primary btn-query">查询
+    </button>
+      </div>
+    <div v-if="requestFailed" class="alert alert-danger">
+      <p>查询失败: {{ responseData.msg }}</p>
+    </div>
+    <template v-else-if="fetchedCards">
+      <div class="results-summary">
+        <p>卡片数量: {{ responseData.total }}</p>
+        <p>页:（{{ currentPage }}/{{ responseData.pages }})</p>
+      </div>
+      <div style="width: 100%;overflow-x: auto">
+        <div class="cards-table">
+          <table class="table">
+            <thead>
+            <tr>
+              <th>持卡者ID</th>
+              <th>持卡者学号</th>
+              <th>持卡者姓名</th>
+              <th>持卡者邮箱</th>
+              <th>卡号</th>
+              <th>创建时间</th>
+              <th>过期时间</th>
+              <th>余额</th>
+              <th>是否过期</th>
+              <th>是否挂失</th>
+              <th>是否禁用</th>
+              <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="card in responseData.cards" :key="card.id">
+              <td>{{ card.user.id }}</td>
+              <td>{{ card.user.student_id }}</td>
+              <td>{{ card.user.name }}</td>
+              <td>{{ card.user.email }}</td>
+              <td>{{ card.id }}</td>
+              <td>{{ card.created_at }}</td>
+              <td>{{ card.expires_at }}</td>
+              <td>{{ card.balance }}</td>
+              <td>{{ card.is_expired ? '是' : '否' }}</td>
+              <td>{{ card.is_lost ? '是' : '否' }}</td>
+              <td>{{ card.is_banned ? '是' : '否' }}</td>
+              <td>
+                <button @click="showCardEditor(card)" class="btn btn-primary"
+                        v-if="hasPermission('CHANGE_CARD_STATUS') || hasPermission('CHANGE_CARD_BALANCE')">
+                  修改
+                </button>
+                <button @click="showRenewWindow(card)" class="btn btn-primary" v-if="hasPermission('RENEW_CARD')">
+                  延期
+                </button>
+                <button @click="showDeleteModal(card)" class="btn btn-danger" v-if="hasPermission('DEL_CARD')">
+                  删除
+                </button>
+                <template
+                    v-if="!(hasPermission('DEL_CARD') || hasPermission('CHANGE_CARD_STATUS') || hasPermission('CHANGE_CARD_BALANCE'))">
+                  无权限
+                </template>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="pagination">
+        <button @click="prevPage" :disabled="!responseData.has_prev" class="btn btn-secondary">上一页</button>
+        <button @click="nextPage" :disabled="!responseData.has_next" class="btn btn-secondary">下一页</button>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -329,15 +331,18 @@ input[type="date"].no-input::-webkit-calendar-picker-indicator {
   margin-bottom: 20px;
 }
 
-.query-btn {
-  margin-top: 20px;
-}
-
 .hint {
   text-align: center;
   margin-top: 10px;
   font-size: 14px;
   color: #666;
+}
+
+.btn-group {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
 }
 </style>
 
