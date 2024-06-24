@@ -34,9 +34,6 @@ def get_transactions():
                 'msg': 'No data provided'
             }
             return jsonify(response_json), response_json['code']
-        query = Transaction.query.order_by(Transaction.id.desc())
-        start_date_str = g.data.get('start_date', None)
-        end_date_str = g.data.get('end_date', None)
         try:
             query = Transaction.query.order_by(
                 getattr(Transaction, sort_by).desc() if sort_order == 'desc' else getattr(Transaction, sort_by).asc())
@@ -62,7 +59,20 @@ def get_transactions():
                 elif k in ['id', 'comments']:
                     query = query.filter(getattr(Transaction, k).like('%' + v + '%'))
                 elif k in ['start_date', 'end_date']:
-                    continue
+                    try:
+                        if k == 'start_date':
+                            start_date = datetime.strptime(v, '%Y-%m-%d')
+                            query = query.filter(Transaction.created_at >= start_date)
+                        elif k == 'end_date':
+                            end_date = datetime.strptime(v, '%Y-%m-%d')
+                            query = query.filter(Transaction.created_at <= end_date)
+                    except ValueError:
+                        response_json = {
+                            'success': False,
+                            'code': 400,
+                            'msg': 'Invalid date format. Use YYYY-MM-DD'
+                        }
+                        return jsonify(response_json), response_json['code']
                 else:
                     query = query.filter(getattr(Transaction, k) == v)
         except AttributeError as e:
@@ -73,20 +83,6 @@ def get_transactions():
             }
             return jsonify(response_json), response_json['code']
         else:
-            try:
-                if start_date_str:
-                    start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
-                    query = query.filter(Transaction.created_at >= start_date)
-                if end_date_str:
-                    end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
-                    query = query.filter(Transaction.created_at <= end_date)
-            except ValueError:
-                response_json = {
-                    'success': False,
-                    'code': 400,
-                    'msg': 'Invalid date format. Use YYYY-MM-DD'
-                }
-                return jsonify(response_json), response_json['code']
             pagination = query.paginate(page=page, per_page=per_page, error_out=False)
             transactions = pagination.items
     if transactions:
