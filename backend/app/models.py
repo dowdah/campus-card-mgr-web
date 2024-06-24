@@ -492,7 +492,7 @@ class FinancialReport(db.Model):
     def formatted_created_at(self):
         return self.created_at.strftime(OUTPUT_TIME_FORMAT)
 
-    @property
+    @hybrid_property
     def is_xlsx_expired(self):
         return self.xlsx_expiration is not None and self.created_at + self.xlsx_expiration < datetime.datetime.utcnow()
 
@@ -577,3 +577,22 @@ class FinancialReport(db.Model):
             df_summary.to_excel(writer, sheet_name='总览', index=False)
         buffer.seek(0)
         self.xlsx_data = buffer.read()
+
+    def generate_download_token(self):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        return s.dumps({'id': self.id})
+
+    @staticmethod
+    def verify_download_token(token, expiration=None):
+        if expiration is None:
+            expiration = current_app.config['FR_TOKEN_EXPIRATION']
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token.encode('utf-8'), max_age=expiration)
+        except:
+            return None
+        if data.get('id') is not None:
+            report = FinancialReport.query.get(data.get('id'))
+            if report is not None:
+                return report
+        return None
