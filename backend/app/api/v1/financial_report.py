@@ -89,7 +89,7 @@ def get_reports():
                         }
                         return jsonify(response_json), response_json['code']
                 elif k in ['id', 'comments']:
-                    query = query.filter(getattr(FinancialReport, k).like('%' + v + '%'))
+                    query = query.filter(getattr(FinancialReport, k).like(f"%{v}%"))
                 else:
                     query = query.filter(getattr(FinancialReport, k) == v)
         except AttributeError:

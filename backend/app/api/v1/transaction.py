@@ -57,7 +57,7 @@ def get_transactions():
                     else:
                         raise AttributeError(k)
                 elif k in ['id', 'comments']:
-                    query = query.filter(getattr(Transaction, k).like('%' + v + '%'))
+                    query = query.filter(getattr(Transaction, k).like(f"%{v}%"))
                 elif k in ['start_date', 'end_date']:
                     try:
                         if k == 'start_date':
