@@ -498,8 +498,7 @@ class FinancialReport(db.Model):
 
     @property
     def file_name(self):
-        current_time = datetime.datetime.utcnow().strftime('%Y%m%d_%H%M%S')
-        return f'fr_{current_time}.xlsx'
+        return f'fr_{self.id}.xlsx'
 
     def to_json(self):
         # json_data 和 xlsx_data 字段往往过于庞大，因此不在这里返回，需要单独获取
