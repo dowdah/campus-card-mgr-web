@@ -13,13 +13,23 @@
                @confirm="clearDeleteUserResponse">
     {{ deleteUserData.responseData.msg }}
   </AlertWindow>
+  <transition name="user-editor">
   <UserEditor v-if="modifyUserData.showModifyWindow" :user="modifyUserData.user"
-              @cancel="clearModifyUserData" @save="modifyUser">
-  </UserEditor>
+              @cancel="clearModifyUserData" @save="modifyUser" />
+  </transition>
   <AlertWindow :show-alert="modifyUserData.responseData !== null"
                :title="modifyUserData.failed ? '修改失败' : '修改成功'"
                @confirm="clearModifyUserResponse">
     {{ modifyUserData.responseData.msg }}
+  </AlertWindow>
+  <transition name="card-editor">
+  <NewCardEditor v-if="newCardData.showNewCardWindow" :user="newCardData.user"
+                 @cancel="clearNewCardData" @save="newCard" />
+  </transition>
+  <AlertWindow :show-alert="newCardData.responseData !== null"
+               :title="newCardData.failed ? '创建失败' : '创建成功'"
+               @confirm="clearNewCardResponse">
+    {{ newCardData.responseData.msg }}
   </AlertWindow>
   <div class="users-container">
     <h2 class="title">用户查询与管理</h2>
@@ -115,10 +125,13 @@
                 <button @click="showUserEditor(user)" class="btn btn-primary" v-if="hasPermission('MODIFY_USER_INFO')">
                   修改
                 </button>
+                <button @click="showNewCardEditor(user)" class="btn btn-primary" v-if="hasPermission('ADD_CARD')">
+                  创建卡
+                </button>
                 <button @click="showDeleteModal(user)" class="btn btn-danger" v-if="hasPermission('DEL_USER')">
                   删除
                 </button>
-                <template v-if="!(hasPermission('DEL_USER') || hasPermission('MODIFY_USER_INFO'))">无权限</template>
+                <template v-if="!(hasPermission('DEL_USER') || hasPermission('MODIFY_USER_INFO') || hasPermission('ADD_CARD'))">无权限</template>
               </td>
             </tr>
             </tbody>
@@ -134,6 +147,26 @@
 </template>
 
 <style scoped>
+.user-editor-enter-active,
+.user-editor-leave-active {
+  transition: opacity 100ms ease;
+}
+
+.user-editor-enter-from,
+.user-editor-leave-to {
+  opacity: 0;
+}
+
+.card-editor-enter-active,
+.card-editor-leave-active {
+  transition: opacity 100ms ease;
+}
+
+.card-editor-enter-from,
+.card-editor-leave-to {
+  opacity: 0;
+}
+
 input[type="date"].no-input {
   pointer-events: none;
 }
@@ -283,10 +316,11 @@ import {BASE_API_URL, ROLE_NAMES} from '@/config/constants';
 import ModalWindow from "../components/ModalWindow.vue";
 import AlertWindow from "../components/AlertWindow.vue";
 import UserEditor from "../components/UserEditor.vue";
+import NewCardEditor from "../components/NewCardEditor.vue";
 
 export default {
   name: 'UserMgr',
-  components: {UserEditor, AlertWindow, ModalWindow},
+  components: {UserEditor, AlertWindow, ModalWindow, NewCardEditor},
   data() {
     return {
       responseData: {},
@@ -316,6 +350,12 @@ export default {
         responseData: null,
         failed: false,
         showModifyWindow: false
+      },
+      newCardData: {
+        user: null,
+        responseData: null,
+        failed: false,
+        showNewCardWindow: false
       }
     }
   },
@@ -438,6 +478,32 @@ export default {
       } catch (error) {
         this.modifyUserData.responseData = error.response.data;
         this.modifyUserData.failed = true;
+      } finally {
+        this.setLoading(false);
+      }
+    },
+    showNewCardEditor(user) {
+      this.newCardData.user = user;
+      this.newCardData.showNewCardWindow = true;
+    },
+    clearNewCardData() {
+      this.newCardData.showNewCardWindow = false;
+      this.newCardData.user = null;
+    },
+    clearNewCardResponse() {
+      this.newCardData.responseData = null;
+      this.newCardData.failed = false;
+    },
+    async newCard(card, userId) {
+      this.clearNewCardData();
+      this.setLoading(true);
+      try {
+        const response = await axios.post(`${BASE_API_URL}/card/create/${userId}`, card);
+        this.newCardData.responseData = response.data;
+        this.newCardData.failed = false;
+      } catch (error) {
+        this.newCardData.responseData = error.response.data;
+        this.newCardData.failed = true;
       } finally {
         this.setLoading(false);
       }
