@@ -57,16 +57,16 @@ def get_cards():
                 elif k in ['start_created_date', 'end_created_date', 'start_expires_date', 'end_expires_date']:
                     try:
                         if k == 'start_created_date':
-                            start_created_date = datetime.strptime(start_created_date_str, '%Y-%m-%d')
+                            start_created_date = datetime.strptime(v, '%Y-%m-%d')
                             query = query.filter(Card.created_at >= start_created_date)
                         elif k == 'end_created_date':
-                            end_created_date = datetime.strptime(end_created_date_str, '%Y-%m-%d')
+                            end_created_date = datetime.strptime(v, '%Y-%m-%d')
                             query = query.filter(Card.created_at <= end_created_date)
                         elif k == 'start_expires_date':
-                            start_expires_date = datetime.strptime(start_expires_date_str, '%Y-%m-%d')
+                            start_expires_date = datetime.strptime(v, '%Y-%m-%d')
                             query = query.filter(Card.expires_at >= start_expires_date)
                         elif k == 'end_expires_date':
-                            end_expires_date = datetime.strptime(end_expires_date_str, '%Y-%m-%d')
+                            end_expires_date = datetime.strptime(v, '%Y-%m-%d')
                             query = query.filter(Card.expires_at <= end_expires_date)
                     except ValueError:
                         response_json = {
