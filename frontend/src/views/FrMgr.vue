@@ -17,6 +17,14 @@
                @confirm="clearNewFrTask">
     {{ newFrTask.taskStatus === 'SUCCESS' ? '财务报表创建成功！' : '财务报表创建失败！' }}
   </AlertWindow>
+  <FrEditor v-if="modifyFrData.showModifyWindow" :fr="modifyFrData.fr" @cancel="clearModifyFrData"
+            @save="modifyFr">
+  </FrEditor>
+  <AlertWindow :show-alert="modifyFrData.responseData !== null"
+               :title="modifyFrData.failed ? '修改失败' : '修改成功'"
+               @confirm="clearModifyFrResponse">
+    {{ modifyFrData.responseData.msg }}
+  </AlertWindow>
   <div class="fr-container">
     <h2 class="title">财务报表查询与管理</h2>
     <p class="hint">如果遇到性能问题，取消勾选“立即查询”</p>
@@ -158,12 +166,15 @@
                 <button @click="downloadFr(fr.id)" class="btn btn-primary"
                         v-if="hasPermission('EXPORT_REPORTS')">下载
                 </button>
+                <button @click="showFrEditor(fr)" class="btn btn-primary"
+                        v-if="hasPermission('GENERATE_REPORTS')">修改
+                </button>
                 <button @click="showDeleteModal(fr)" class="btn btn-primary btn-danger"
                         v-if="hasPermission('DEL_REPORTS')">
                   删除
                 </button>
                 <template
-                    v-if="!(hasPermission('DEL_REPORTS') || hasPermission('EXPORT_REPORTS'))">
+                    v-if="!(hasPermission('DEL_REPORTS') || hasPermission('EXPORT_REPORTS') || hasPermission('GENERATE_REPORTS'))">
                   无权限
                 </template>
               </td>
@@ -332,10 +343,11 @@ import axios from 'axios';
 import {BASE_API_URL} from '@/config/constants';
 import ModalWindow from "../components/ModalWindow.vue";
 import AlertWindow from "../components/AlertWindow.vue";
+import FrEditor from "../components/FrEditor.vue";
 
 export default {
   name: 'FrMgr',
-  components: {AlertWindow, ModalWindow},
+  components: {FrEditor, AlertWindow, ModalWindow},
   data() {
     return {
       responseData: {},
@@ -380,6 +392,12 @@ export default {
         taskStatus: null,
         taskId: null,
         intervalId: null
+      },
+      modifyFrData: {
+        fr: null,
+        responseData: null,
+        failed: false,
+        showModifyWindow: false
       }
     }
   },
@@ -584,6 +602,33 @@ export default {
       this.newFrTask.taskId = null;
       clearInterval(this.newFrTask.intervalId);
       this.newFrTask.intervalId = null;
+    },
+    showFrEditor(fr) {
+      this.modifyFrData.fr = fr;
+      this.modifyFrData.showModifyWindow = true;
+    },
+    clearModifyFrData() {
+      this.modifyFrData.showModifyWindow = false;
+      this.modifyFrData.fr = null;
+    },
+    clearModifyFrResponse() {
+      this.modifyFrData.responseData = null;
+      this.modifyFrData.failed = false;
+    },
+    async modifyFr(fr, frId) {
+      this.clearModifyFrData();
+      this.setLoading(true);
+      try {
+        const response = await axios.put(`${BASE_API_URL}/fr/update/${frId}`, fr);
+        this.modifyFrData.responseData = response.data;
+        this.modifyFrData.failed = false;
+        await this.fetchFrs(this.currentPage, this.perPage);
+      } catch (error) {
+        this.modifyFrData.responseData = error.response.data;
+        this.modifyFrData.failed = true;
+      } finally {
+        this.setLoading(false);
+      }
     }
   },
   watch: {

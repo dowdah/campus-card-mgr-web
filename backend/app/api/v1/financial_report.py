@@ -166,3 +166,33 @@ def remove_report(report_id):
     db.session.commit()
     response_json = {'success': True, 'code': 200}
     return jsonify(response_json), response_json['code']
+
+
+@fr_bp.route('/update/<int:report_id>', methods=['PUT'])
+@permission_required(Permission.GENERATE_REPORTS)
+def update_fr(report_id):
+    report = FinancialReport.query.get_or_404(report_id)
+    if g.data is None:
+        response_json = {
+            'success': False,
+            'code': 400,
+            'msg': 'No data provided'
+        }
+    else:
+        comments = g.data.get('comments')
+        if comments is not None:
+            report.comments = comments
+            db.session.add(report)
+            db.session.commit()
+            response_json = {
+                'success': True,
+                'code': 200,
+                'msg': '财务报表备注更新成功。'
+            }
+        else:
+            response_json = {
+                'success': False,
+                'code': 400,
+                'msg': 'No data provided'
+            }
+    return jsonify(response_json), response_json['code']

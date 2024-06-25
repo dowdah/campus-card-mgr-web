@@ -123,7 +123,7 @@ class Permission:
     VIEW_USER_INFO = 1024  # 查看用户信息
     MODIFY_USER_INFO = 2048  # 修改用户信息
     DEL_USER = 4096  # 删除用户
-    GENERATE_REPORTS = 8192  # 生成报告
+    GENERATE_REPORTS = 8192  # 生成报告(包括编辑报告的备注)
     EXPORT_REPORTS = 16384  # 下载报告
     MANAGE_PERMISSIONS = 32768  # 调整角色权限
     BACKUP_DATA = 65536  # 备份数据
