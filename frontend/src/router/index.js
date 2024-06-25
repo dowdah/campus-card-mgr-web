@@ -8,6 +8,7 @@ import TransactionSimulation from "../views/TransactionSimulation.vue";
 import UserMgr from "../views/UserMgr.vue";
 import CardMgr from "../views/CardMgr.vue";
 import TransactionMgr from "../views/TransactionMgr.vue";
+import FrMgr from "../views/FrMgr.vue";
 
 const routes = [
     {path: '/', name: '主页', component: Home},
@@ -45,6 +46,17 @@ const routes = [
             requiresAuth: true,
             requiresPermission: [
                 'VIEW_USER_INFO'
+            ]
+        }
+    },
+    {
+        path: '/fr-mgr',
+        name: '财务报表管理',
+        component: FrMgr,
+        meta: {
+            requiresAuth: true,
+            requiresPermission: [
+                'EXPORT_REPORTS'
             ]
         }
     }

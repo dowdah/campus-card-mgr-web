@@ -1,5 +1,5 @@
 from . import v1_bp
-from flask import jsonify, request, g, abort, current_app, abort
+from flask import jsonify, request, g, abort, current_app, abort, redirect, url_for
 from ...models import User, Permission
 
 
@@ -37,3 +37,8 @@ def get_permission_info():
         'permissions': Permission.to_json()
     }
     return jsonify(response_json), response_json['code']
+
+
+@v1_bp.route('/task/<task_id>')
+def get_task(task_id):
+    return redirect(url_for('api.get_task', task_id=task_id))
