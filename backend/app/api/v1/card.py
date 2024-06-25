@@ -35,10 +35,6 @@ def get_cards():
                 'msg': 'No data provided'
             }
             return jsonify(response_json), response_json['code']
-        start_created_date_str = g.data.get('start_created_date', None)
-        end_created_date_str = g.data.get('end_created_date', None)
-        start_expires_date_str = g.data.get('start_expires_date', None)
-        end_expires_date_str = g.data.get('end_expires_date', None)
         try:
             query = Card.query.order_by(
                 getattr(Card, sort_by).desc() if sort_order == 'desc' else getattr(Card, sort_by).asc())
@@ -59,7 +55,26 @@ def get_cards():
                     else:
                         raise AttributeError(k)
                 elif k in ['start_created_date', 'end_created_date', 'start_expires_date', 'end_expires_date']:
-                    continue
+                    try:
+                        if k == 'start_created_date':
+                            start_created_date = datetime.strptime(start_created_date_str, '%Y-%m-%d')
+                            query = query.filter(Card.created_at >= start_created_date)
+                        elif k == 'end_created_date':
+                            end_created_date = datetime.strptime(end_created_date_str, '%Y-%m-%d')
+                            query = query.filter(Card.created_at <= end_created_date)
+                        elif k == 'start_expires_date':
+                            start_expires_date = datetime.strptime(start_expires_date_str, '%Y-%m-%d')
+                            query = query.filter(Card.expires_at >= start_expires_date)
+                        elif k == 'end_expires_date':
+                            end_expires_date = datetime.strptime(end_expires_date_str, '%Y-%m-%d')
+                            query = query.filter(Card.expires_at <= end_expires_date)
+                    except ValueError:
+                        response_json = {
+                            'success': False,
+                            'code': 400,
+                            'msg': 'Invalid date format. Use YYYY-MM-DD'
+                        }
+                        return jsonify(response_json), response_json['code']
                 else:
                     query = query.filter(getattr(Card, k) == v)
         except AttributeError as e:
@@ -70,50 +85,6 @@ def get_cards():
             }
             return jsonify(response_json), response_json['code']
         else:
-            if start_created_date_str:
-                try:
-                    start_created_date = datetime.strptime(start_created_date_str, '%Y-%m-%d')
-                    query = query.filter(Card.created_at >= start_created_date)
-                except ValueError:
-                    response_json = {
-                        'success': False,
-                        'code': 400,
-                        'msg': 'Invalid date format. Use YYYY-MM-DD'
-                    }
-                    return jsonify(response_json), response_json['code']
-            if end_created_date_str:
-                try:
-                    end_created_date = datetime.strptime(end_created_date_str, '%Y-%m-%d')
-                    query = query.filter(Card.created_at <= end_created_date)
-                except ValueError:
-                    response_json = {
-                        'success': False,
-                        'code': 400,
-                        'msg': 'Invalid date format. Use YYYY-MM-DD'
-                    }
-                    return jsonify(response_json), response_json['code']
-            if start_expires_date_str:
-                try:
-                    start_expires_date = datetime.strptime(start_expires_date_str, '%Y-%m-%d')
-                    query = query.filter(Card.expires_at >= start_expires_date)
-                except ValueError:
-                    response_json = {
-                        'success': False,
-                        'code': 400,
-                        'msg': 'Invalid date format. Use YYYY-MM-DD'
-                    }
-                    return jsonify(response_json), response_json['code']
-            if end_expires_date_str:
-                try:
-                    end_expires_date = datetime.strptime(end_expires_date_str, '%Y-%m-%d')
-                    query = query.filter(Card.expires_at <= end_expires_date)
-                except ValueError:
-                    response_json = {
-                        'success': False,
-                        'code': 400,
-                        'msg': 'Invalid date format. Use YYYY-MM-DD'
-                    }
-                    return jsonify(response_json), response_json['code']
             pagination = query.paginate(page=page, per_page=per_page, error_out=False)
             cards = pagination.items
     if cards:
@@ -133,7 +104,7 @@ def get_cards():
         response_json = {
             'success': False,
             'code': 404,
-            'msg': '没有符合条件的一卡通。'
+            'msg': '未找到符合条件的一卡通。'
         }
     return jsonify(response_json), response_json['code']
 
