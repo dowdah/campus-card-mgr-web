@@ -46,7 +46,7 @@ def get_cards():
             for k, v in g.data.items():
                 if k.startswith('user_'):
                     user_attr = k[k.find('_') + 1:]
-                    query = query.filter(Card.user.has(getattr(User, user_attr).like('%' + v + '%')))
+                    query = query.filter(Card.user.has(getattr(User, user_attr).like(f"%{v}%")))
                 elif k.startswith('balance_'):
                     if k == 'balance_gt':
                         query = query.filter(Card.balance > v)

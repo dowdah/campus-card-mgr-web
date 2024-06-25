@@ -47,7 +47,7 @@ def get_users():
                 if k == 'role_name':
                     query = query.filter(User.role.has(name=v))
                 elif k in ['name', 'student_id', 'email', 'comments']:
-                    query = query.filter(getattr(User, k).like('%' + v + '%'))
+                    query = query.filter(getattr(User, k).like(f"%{v}%"))
                 elif k in ['start_date', 'end_date']:
                     try:
                         if k == 'start_date':
