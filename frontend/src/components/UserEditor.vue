@@ -1,52 +1,41 @@
 <template>
-  <transition name="user-editor">
-    <div class="user-editor">
-      <form @submit.prevent="handleSubmit" class="editor-form">
-        <div class="editor-row">
-          <label for="name">姓名:</label>
-          <input v-model="userData.name" id="name" required/>
+  <div class="user-editor">
+    <form @submit.prevent="handleSubmit" class="editor-form">
+      <p class="editor-title">修改用户信息</p>
+      <div class="editor-row">
+        <label for="name">姓名:</label>
+        <input v-model="userData.name" id="name" required/>
+      </div>
+      <div class="editor-row">
+        <label for="student_id">学号:</label>
+        <input v-model="userData.student_id" id="student_id" required/>
+      </div>
+      <div class="editor-row">
+        <label for="email">邮箱:</label>
+        <input v-model="userData.email" id="email" type="email" required/>
+      </div>
+      <div class="editor-row">
+        <p>已验证邮箱:</p>
+        <div class="radio-group">
+          <label for="confirmed">是</label>
+          <input v-model="userData.confirmed" id="confirmed" type="radio" value="true"/>
+          <label for="unconfirmed">否</label>
+          <input v-model="userData.confirmed" id="unconfirmed" type="radio" value="false"/>
         </div>
-        <div class="editor-row">
-          <label for="student_id">学号:</label>
-          <input v-model="userData.student_id" id="student_id" required/>
-        </div>
-        <div class="editor-row">
-          <label for="email">邮箱:</label>
-          <input v-model="userData.email" id="email" type="email" required/>
-        </div>
-        <div class="editor-row">
-          <p>已验证邮箱:</p>
-          <div class="radio-group">
-            <label for="confirmed">是</label>
-            <input v-model="userData.confirmed" id="confirmed" type="radio" value="true"/>
-            <label for="unconfirmed">否</label>
-            <input v-model="userData.confirmed" id="unconfirmed" type="radio" value="false"/>
-          </div>
-        </div>
-        <div class="editor-row">
-          <label for="comments">备注:</label>
-          <textarea v-model="userData.comments" id="comments"></textarea>
-        </div>
-        <div class="editor-row">
-          <button type="submit" class="btn-save">保存</button>
-          <button type="button" @click="handleCancel" class="btn-cancel">取消</button>
-        </div>
-      </form>
-    </div>
-  </transition>
+      </div>
+      <div class="editor-row">
+        <label for="comments">备注:</label>
+        <textarea v-model="userData.comments" id="comments"></textarea>
+      </div>
+      <div class="editor-row">
+        <button type="submit" class="btn-form">保存</button>
+        <button type="button" @click="handleCancel" class="btn-form">取消</button>
+      </div>
+    </form>
+  </div>
 </template>
 
 <style scoped>
-.user-editor-enter-active,
-.user-editor-leave-active {
-  transition: opacity 150ms ease;
-}
-
-.user-editor-enter-from,
-.user-editor-leave-to {
-  opacity: 0;
-}
-
 .user-editor {
   position: fixed;
   top: 0;
@@ -92,7 +81,7 @@ input:focus {
   outline: none;
 }
 
-.btn-save {
+.btn-form {
   padding: 10px 20px;
   border: none;
   border-radius: 5px;
@@ -102,22 +91,8 @@ input:focus {
   transition: background-color 0.3s;
 }
 
-.btn-save:hover {
+.btn-form:hover {
   background-color: #0056b3;
-}
-
-.btn-cancel {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-  background-color: #dc3545;
-  color: white;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.btn-cancel:hover {
-  background-color: #a71d2a;
 }
 
 .radio-group {
@@ -137,6 +112,12 @@ input:focus {
 #comments {
   width: 200px;
   height: 100px;
+}
+
+.editor-title {
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
 }
 </style>
 
