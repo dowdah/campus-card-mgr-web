@@ -123,7 +123,7 @@ class Permission:
     VIEW_USER_INFO = 1024  # 查看用户信息
     MODIFY_USER_INFO = 2048  # 修改用户信息
     DEL_USER = 4096  # 删除用户
-    GENERATE_REPORTS = 8192  # 生成报告
+    GENERATE_REPORTS = 8192  # 生成报告(包括编辑报告的备注)
     EXPORT_REPORTS = 16384  # 下载报告
     MANAGE_PERMISSIONS = 32768  # 调整角色权限
     BACKUP_DATA = 65536  # 备份数据
@@ -492,14 +492,13 @@ class FinancialReport(db.Model):
     def formatted_created_at(self):
         return self.created_at.strftime(OUTPUT_TIME_FORMAT)
 
-    @property
+    @hybrid_property
     def is_xlsx_expired(self):
         return self.xlsx_expiration is not None and self.created_at + self.xlsx_expiration < datetime.datetime.utcnow()
 
     @property
     def file_name(self):
-        current_time = datetime.datetime.utcnow().strftime('%Y%m%d_%H%M%S')
-        return f'fr_{current_time}.xlsx'
+        return f'fr_{self.id}.xlsx'
 
     def to_json(self):
         # json_data 和 xlsx_data 字段往往过于庞大，因此不在这里返回，需要单独获取
@@ -577,3 +576,22 @@ class FinancialReport(db.Model):
             df_summary.to_excel(writer, sheet_name='总览', index=False)
         buffer.seek(0)
         self.xlsx_data = buffer.read()
+
+    def generate_download_token(self):
+        s = Serializer(current_app.config['SECRET_KEY'])
+        return s.dumps({'id': self.id})
+
+    @staticmethod
+    def verify_download_token(token, expiration=None):
+        if expiration is None:
+            expiration = current_app.config['FR_TOKEN_EXPIRATION']
+        s = Serializer(current_app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token.encode('utf-8'), max_age=expiration)
+        except:
+            return None
+        if data.get('id') is not None:
+            report = FinancialReport.query.get(data.get('id'))
+            if report is not None:
+                return report
+        return None

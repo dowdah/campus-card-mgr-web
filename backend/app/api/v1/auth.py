@@ -95,7 +95,7 @@ def send_confirmation():
         response_json = {
             'success': False,
             'code': 400,
-            'msg': 'User already confirmed'
+            'msg': '该用户邮箱已验证。'
         }
     else:
         task = current_app.celery.send_task('app.send_email', args=[[g.current_user.email],
@@ -104,7 +104,7 @@ def send_confirmation():
         response_json = {
             'success': True,
             'code': 200,
-            'msg': 'Confirmation email sent',
+            'msg': '验证邮件已发送。',
             'task_id': task.id
         }
     return jsonify(response_json), response_json['code']
@@ -116,7 +116,7 @@ def confirm(token):
         response_json = {
             'success': False,
             'code': 400,
-            'msg': 'User already confirmed'
+            'msg': '该用户邮箱已验证。'
         }
     elif g.current_user.validate_token(token):
         g.current_user.confirmed = True
@@ -125,7 +125,7 @@ def confirm(token):
         response_json = {
             'success': True,
             'code': 200,
-            'msg': 'User confirmed'
+            'msg': '邮箱验证成功。'
         }
     else:
         response_json = {
@@ -150,7 +150,7 @@ def send_reset_password_email():
             response_json = {
                 'success': False,
                 'code': 400,
-                'msg': '参数错误'
+                'msg': '参数错误。'
             }
             return jsonify(response_json), response_json['code']
         else:
@@ -163,7 +163,7 @@ def send_reset_password_email():
         response_json = {
             'success': False,
             'code': 400,
-            'msg': '不会有人把账号密码都忘了吧？'
+            'msg': '账户不存在，要不要再想想？'
         }
         return jsonify(response_json), response_json['code']
     task = current_app.celery.send_task('app.send_email', args=[[user.email],
@@ -172,7 +172,7 @@ def send_reset_password_email():
     response_json = {
         'success': True,
         'code': 200,
-        'msg': 'Reset password email sent',
+        'msg': '重置密码邮件已发送。',
         'task_id': task.id
     }
     return jsonify(response_json), response_json['code']
@@ -193,7 +193,7 @@ def reset_password(token):
             response_json = {
                 'success': False,
                 'code': 400,
-                'msg': '参数错误'
+                'msg': '参数错误。'
             }
             return jsonify(response_json), response_json['code']
         else:
@@ -206,7 +206,7 @@ def reset_password(token):
         response_json = {
             'success': False,
             'code': 400,
-            'msg': '参数错误'
+            'msg': '参数错误。'
         }
         return jsonify(response_json), response_json['code']
     if user.validate_token(token):
@@ -220,7 +220,7 @@ def reset_password(token):
         response_json = {
             'success': True,
             'code': 200,
-            'msg': '密码重置成功',
+            'msg': '密码重置成功。',
             'user': user.to_json(),
             'token': user.generate_auth_token(),
             'expiration': current_app.config['API_TOKEN_EXPIRATION']
@@ -229,6 +229,6 @@ def reset_password(token):
         response_json = {
             'success': False,
             'code': 400,
-            'msg': 'Token 不合法'
+            'msg': 'Token 不合法。'
         }
     return jsonify(response_json), response_json['code']
