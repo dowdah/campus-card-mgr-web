@@ -317,6 +317,8 @@ class Card(db.Model):
 
     @balance.setter
     def balance(self, value):
+        if self._balance is None:
+            self._balance = 0.0
         if value >= 0:
             offset = value - self._balance
             if offset != 0:
