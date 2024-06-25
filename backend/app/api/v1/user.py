@@ -35,9 +35,13 @@ def get_users():
                 'msg': 'No data provided'
             }
             return jsonify(response_json), response_json['code']
-        start_date_str = g.data.get('start_date', None)
-        end_date_str = g.data.get('end_date', None)
-        query = User.query
+        try:
+            query = User.query.order_by(
+                getattr(User, sort_by).desc() if sort_order == 'desc' else getattr(User, sort_by).asc())
+        except AttributeError:
+            sort_by = 'id'
+            query = User.query.order_by(
+                getattr(User, sort_by).desc() if sort_order == 'desc' else getattr(User, sort_by).asc())
         try:
             for k, v in g.data.items():
                 if k == 'role_name':
@@ -45,7 +49,20 @@ def get_users():
                 elif k in ['name', 'student_id', 'email', 'comments']:
                     query = query.filter(getattr(User, k).like('%' + v + '%'))
                 elif k in ['start_date', 'end_date']:
-                    continue
+                    try:
+                        if k == 'start_date':
+                            start_date = datetime.strptime(v, '%Y-%m-%d')
+                            query = query.filter(User.created_at >= start_date)
+                        elif k == 'end_date':
+                            end_date = datetime.strptime(v, '%Y-%m-%d')
+                            query = query.filter(User.created_at <= end_date)
+                    except ValueError:
+                        response_json = {
+                            'success': False,
+                            'code': 400,
+                            'msg': 'Invalid date format. Use YYYY-MM-DD'
+                        }
+                        return jsonify(response_json), response_json['code']
                 else:
                     query = query.filter(getattr(User, k) == v)
         except AttributeError:
@@ -56,36 +73,6 @@ def get_users():
             }
             return jsonify(response_json), response_json['code']
         else:
-            try:
-                query = query.order_by(
-                    getattr(User, sort_by).desc() if sort_order == 'desc' else getattr(User, sort_by).asc())
-            except AttributeError:
-                sort_by = 'id'
-                query = query.order_by(
-                    getattr(User, sort_by).desc() if sort_order == 'desc' else getattr(User, sort_by).asc())
-            if start_date_str:
-                try:
-                    start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
-                    query = query.filter(User.created_at >= start_date)
-                except ValueError:
-                    response_json = {
-                        'success': False,
-                        'code': 400,
-                        'msg': 'Invalid date format. Use YYYY-MM-DD'
-                    }
-                    return jsonify(response_json), response_json['code']
-
-            if end_date_str:
-                try:
-                    end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
-                    query = query.filter(User.created_at <= end_date)
-                except ValueError:
-                    response_json = {
-                        'success': False,
-                        'code': 400,
-                        'msg': 'Invalid date format. Use YYYY-MM-DD'
-                    }
-                    return jsonify(response_json), response_json['code']
             pagination = query.paginate(page=page, per_page=per_page, error_out=False)
             users = pagination.items
     if users:
@@ -105,7 +92,7 @@ def get_users():
         response_json = {
             'success': False,
             'code': 404,
-            'msg': 'No user found'
+            'msg': '未找到符合条件的用户。'
         }
     return jsonify(response_json), response_json['code']
 
