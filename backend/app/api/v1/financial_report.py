@@ -119,7 +119,7 @@ def get_reports():
         response_json = {
             'success': False,
             'code': 404,
-            'msg': 'No report found'
+            'msg': '未找到符合条件的财务报表。'
         }
     return jsonify(response_json), response_json['code']
 
