@@ -13,6 +13,16 @@
                @confirm="clearCancelTransactionResponse">
     {{ cancelTransactionData.responseData.msg }}
   </AlertWindow>
+  <transition name="transaction-editor">
+    <TransactionEditor v-if="modifyTransactionData.showModifyWindow" :transaction="modifyTransactionData.transaction"
+                       @cancel="clearModifyTransactionData"
+                       @save="modifyTransaction"/>
+  </transition>
+  <AlertWindow :show-alert="modifyTransactionData.responseData !== null"
+               :title="modifyTransactionData.failed ? '修改失败' : '修改成功'"
+               @confirm="clearModifyTransactionResponse">
+    {{ modifyTransactionData.responseData.msg }}
+  </AlertWindow>
   <div class="transaction-container">
     <h2 class="title">交易查询与管理</h2>
     <p class="hint">如果遇到性能问题，取消勾选“立即查询”</p>
@@ -144,12 +154,16 @@
               <td>{{ transaction.status }}</td>
               <td>{{ transaction.comments === '' ? '无' : transaction.comments }}</td>
               <td>
-                <button @click="showCancelModal(transaction)" class="btn btn-primary"
+                <button @click="showTransactionEditor(transaction)" class="btn btn-primary"
+                        v-if="hasPermission('VIEW_USER_INFO')">
+                  修改
+                </button>
+                <button @click="showCancelModal(transaction)" class="btn btn-primary btn-danger"
                         v-if="hasPermission('CANCEL_TRANSACTION')" :disabled="transaction.is_canceled">
                   撤销
                 </button>
                 <template
-                    v-if="!(hasPermission('CANCEL_TRANSACTION'))">
+                    v-if="!(hasPermission('CANCEL_TRANSACTION') || hasPermission('VIEW_USER_INFO'))">
                   无权限
                 </template>
               </td>
@@ -167,6 +181,16 @@
 </template>
 
 <style scoped>
+.transaction-editor-enter-active,
+.transaction-editor-leave-active {
+  transition: opacity 100ms ease;
+}
+
+.transaction-editor-enter-from,
+.transaction-editor-leave-to {
+  opacity: 0;
+}
+
 input[type="date"].no-input {
   pointer-events: none;
 }
@@ -319,10 +343,11 @@ import {BASE_API_URL} from '@/config/constants';
 import ModalWindow from "../components/ModalWindow.vue";
 import AlertWindow from "../components/AlertWindow.vue";
 import cards from "./Cards.vue";
+import TransactionEditor from '../components/TransactionEditor.vue';
 
 export default {
   name: 'TransactionMgr',
-  components: {AlertWindow, ModalWindow},
+  components: {AlertWindow, ModalWindow, TransactionEditor},
   data() {
     return {
       responseData: {},
@@ -362,6 +387,12 @@ export default {
         responseData: null,
         failed: false,
         showConfirmWindow: false
+      },
+      modifyTransactionData: {
+        transaction: null,
+        responseData: null,
+        failed: false,
+        showModifyWindow: false
       }
     }
   },
@@ -513,7 +544,33 @@ export default {
           id: ''
         }
       }
-
+    },
+    showTransactionEditor(transaction) {
+      this.modifyTransactionData.transaction = transaction;
+      this.modifyTransactionData.showModifyWindow = true;
+    },
+    clearModifyTransactionData() {
+      this.modifyTransactionData.showModifyWindow = false;
+      this.modifyTransactionData.transaction = null;
+    },
+    clearModifyTransactionResponse() {
+      this.modifyTransactionData.responseData = null;
+      this.modifyTransactionData.failed = false;
+    },
+    async modifyTransaction(transaction, transactionId) {
+      this.clearModifyTransactionData();
+      this.setLoading(true);
+      try {
+        const response = await axios.put(`${BASE_API_URL}/transaction/update/${transactionId}`, transaction);
+        this.modifyTransactionData.responseData = response.data;
+        this.modifyTransactionData.failed = false;
+        await this.fetchTransactions(this.currentPage, this.perPage);
+      } catch (error) {
+        this.modifyTransactionData.responseData = error.response.data;
+        this.modifyTransactionData.failed = true;
+      } finally {
+        this.setLoading(false);
+      }
     }
   },
   watch: {
