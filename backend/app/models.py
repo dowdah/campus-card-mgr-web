@@ -72,28 +72,7 @@ class Role(db.Model):
                 Permission.SELF_CONSUME_CARD,
                 Permission.SELF_REPORT_LOST_CARD
             ],
-            '学校管理员': [
-                Permission.LOGIN,
-                Permission.SELF_CHANGE_PASSWORD,
-                Permission.SELF_CHANGE_EMAIL,
-                Permission.SELF_RECHARGE_CARD,
-                Permission.SELF_CONSUME_CARD,
-                Permission.SELF_REPORT_LOST_CARD,
-                Permission.CANCEL_TRANSACTION,
-                Permission.CHANGE_CARD_STATUS,
-                Permission.RENEW_CARD,
-                Permission.DEL_CARD,
-                Permission.VIEW_USER_INFO,
-                Permission.MODIFY_USER_INFO,
-                Permission.DEL_USER,
-                Permission.GENERATE_REPORTS,
-                Permission.EXPORT_REPORTS,
-                Permission.CHANGE_CARD_BALANCE,
-                Permission.ADD_USER,
-                Permission.DEL_REPORTS,
-                Permission.ADD_CARD
-            ],
-            '网站运营者': [
+            '管理员': [
                 Permission.OPERATOR
             ]
         }
