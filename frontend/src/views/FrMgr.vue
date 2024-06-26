@@ -17,9 +17,10 @@
                @confirm="clearNewFrTask">
     {{ newFrTask.taskStatus === 'SUCCESS' ? '财务报表创建成功！' : '财务报表创建失败！' }}
   </AlertWindow>
+  <transition name="fr-editor">
   <FrEditor v-if="modifyFrData.showModifyWindow" :fr="modifyFrData.fr" @cancel="clearModifyFrData"
-            @save="modifyFr">
-  </FrEditor>
+            @save="modifyFr" />
+  </transition>
   <AlertWindow :show-alert="modifyFrData.responseData !== null"
                :title="modifyFrData.failed ? '修改失败' : '修改成功'"
                @confirm="clearModifyFrResponse">
@@ -192,6 +193,16 @@
 </template>
 
 <style scoped>
+.fr-editor-enter-active,
+.fr-editor-leave-active {
+  transition: opacity 100ms ease;
+}
+
+.fr-editor-enter-from,
+.fr-editor-leave-to {
+  opacity: 0;
+}
+
 input[type="date"].no-input {
   pointer-events: none;
 }

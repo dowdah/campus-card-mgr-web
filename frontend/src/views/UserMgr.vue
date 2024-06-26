@@ -13,13 +13,32 @@
                @confirm="clearDeleteUserResponse">
     {{ deleteUserData.responseData.msg }}
   </AlertWindow>
-  <UserEditor v-if="modifyUserData.showModifyWindow" :user="modifyUserData.user"
-              @cancel="clearModifyUserData" @save="modifyUser">
-  </UserEditor>
+  <transition name="user-editor">
+    <UserEditor v-if="modifyUserData.showModifyWindow" :user="modifyUserData.user"
+                @cancel="clearModifyUserData" @save="modifyUser"/>
+  </transition>
   <AlertWindow :show-alert="modifyUserData.responseData !== null"
                :title="modifyUserData.failed ? '修改失败' : '修改成功'"
                @confirm="clearModifyUserResponse">
     {{ modifyUserData.responseData.msg }}
+  </AlertWindow>
+  <transition name="new-card-editor">
+    <NewCardEditor v-if="newCardData.showNewCardWindow" :user="newCardData.user"
+                   @cancel="clearNewCardData" @save="newCard"/>
+  </transition>
+  <AlertWindow :show-alert="newCardData.responseData !== null"
+               :title="newCardData.failed ? '创建失败' : '创建成功'"
+               @confirm="clearNewCardResponse">
+    {{ newCardData.responseData.msg }}
+  </AlertWindow>
+  <transition name="new-user-editor">
+    <NewUserEditor v-if="newUserData.showNewUserWindow" @cancel="newUserData.showNewUserWindow = false"
+                   @submit="newUser"/>
+  </transition>
+  <AlertWindow :show-alert="newUserData.responseData !== null"
+               :title="newUserData.failed ? '创建失败' : '创建成功'"
+               @confirm="clearNewUserResponse">
+    {{ newUserData.responseData.msg }}
   </AlertWindow>
   <div class="users-container">
     <h2 class="title">用户查询与管理</h2>
@@ -75,8 +94,14 @@
         <input type="checkbox" id="immediateQuery" v-model="immediateQuery" class="form-control">
       </div>
     </div>
-    <button v-if="!immediateQuery" @click="queryHandler" :disabled="isLoading" class="btn btn-primary query-btn">查询
-    </button>
+    <div class="btn-group">
+      <button @click="resetQuery" class="btn btn-primary" style="display: none">重置查询条件</button>
+      <button @click="newUserData.showNewUserWindow = true" class="btn btn-primary" v-if="hasPermission('ADD_USER')">
+        创建新用户
+      </button>
+      <button v-if="!immediateQuery" @click="queryHandler" :disabled="isLoading" class="btn btn-primary">查询
+      </button>
+    </div>
     <div v-if="requestFailed" class="alert alert-danger">
       <p>查询失败: {{ responseData.msg }}</p>
     </div>
@@ -115,10 +140,16 @@
                 <button @click="showUserEditor(user)" class="btn btn-primary" v-if="hasPermission('MODIFY_USER_INFO')">
                   修改
                 </button>
+                <button @click="showNewCardEditor(user)" class="btn btn-primary" v-if="hasPermission('ADD_CARD')">
+                  创建卡
+                </button>
                 <button @click="showDeleteModal(user)" class="btn btn-danger" v-if="hasPermission('DEL_USER')">
                   删除
                 </button>
-                <template v-if="!(hasPermission('DEL_USER') || hasPermission('MODIFY_USER_INFO'))">无权限</template>
+                <template
+                    v-if="!(hasPermission('DEL_USER') || hasPermission('MODIFY_USER_INFO') || hasPermission('ADD_CARD'))">
+                  无权限
+                </template>
               </td>
             </tr>
             </tbody>
@@ -134,6 +165,36 @@
 </template>
 
 <style scoped>
+.user-editor-enter-active,
+.user-editor-leave-active {
+  transition: opacity 100ms ease;
+}
+
+.user-editor-enter-from,
+.user-editor-leave-to {
+  opacity: 0;
+}
+
+.new-card-editor-enter-active,
+.new-card-editor-leave-active {
+  transition: opacity 100ms ease;
+}
+
+.new-card-editor-enter-from,
+.new-card-editor-leave-to {
+  opacity: 0;
+}
+
+.new-user-editor-enter-active,
+.new-user-editor-leave-active {
+  transition: opacity 100ms ease;
+}
+
+.new-user-editor-enter-from,
+.new-user-editor-leave-to {
+  opacity: 0;
+}
+
 input[type="date"].no-input {
   pointer-events: none;
 }
@@ -260,10 +321,6 @@ input[type="date"].no-input::-webkit-calendar-picker-indicator {
   margin-bottom: 20px;
 }
 
-.query-btn {
-  margin-top: 20px;
-}
-
 .hint {
   text-align: center;
   margin-top: 10px;
@@ -274,6 +331,13 @@ input[type="date"].no-input::-webkit-calendar-picker-indicator {
 .table td button {
   margin: 0 5px;
 }
+
+.btn-group {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
 </style>
 
 <script>
@@ -283,10 +347,12 @@ import {BASE_API_URL, ROLE_NAMES} from '@/config/constants';
 import ModalWindow from "../components/ModalWindow.vue";
 import AlertWindow from "../components/AlertWindow.vue";
 import UserEditor from "../components/UserEditor.vue";
+import NewCardEditor from "../components/NewCardEditor.vue";
+import NewUserEditor from "../components/NewUserEditor.vue";
 
 export default {
   name: 'UserMgr',
-  components: {UserEditor, AlertWindow, ModalWindow},
+  components: {UserEditor, AlertWindow, ModalWindow, NewCardEditor, NewUserEditor},
   data() {
     return {
       responseData: {},
@@ -316,6 +382,17 @@ export default {
         responseData: null,
         failed: false,
         showModifyWindow: false
+      },
+      newCardData: {
+        user: null,
+        responseData: null,
+        failed: false,
+        showNewCardWindow: false
+      },
+      newUserData: {
+        responseData: null,
+        failed: false,
+        showNewUserWindow: false
       }
     }
   },
@@ -344,6 +421,17 @@ export default {
         }
       }
       return data;
+    },
+    resetQuery() {
+      this.startDate = null;
+      this.endDate = this.getToday();
+      this.roleSelection = 'all';
+      this.lazyInputs = {
+        name: '',
+        email: '',
+        student_id: '',
+        comments: ''
+      };
     }
   },
   methods: {
@@ -438,6 +526,51 @@ export default {
       } catch (error) {
         this.modifyUserData.responseData = error.response.data;
         this.modifyUserData.failed = true;
+      } finally {
+        this.setLoading(false);
+      }
+    },
+    showNewCardEditor(user) {
+      this.newCardData.user = user;
+      this.newCardData.showNewCardWindow = true;
+    },
+    clearNewCardData() {
+      this.newCardData.showNewCardWindow = false;
+      this.newCardData.user = null;
+    },
+    clearNewCardResponse() {
+      this.newCardData.responseData = null;
+      this.newCardData.failed = false;
+    },
+    async newCard(card, userId) {
+      this.clearNewCardData();
+      this.setLoading(true);
+      try {
+        const response = await axios.post(`${BASE_API_URL}/card/create/${userId}`, card);
+        this.newCardData.responseData = response.data;
+        this.newCardData.failed = false;
+      } catch (error) {
+        this.newCardData.responseData = error.response.data;
+        this.newCardData.failed = true;
+      } finally {
+        this.setLoading(false);
+      }
+    },
+    clearNewUserResponse() {
+      this.newUserData.responseData = null;
+      this.newUserData.failed = false;
+    },
+    async newUser(userData) {
+      this.newUserData.showNewUserWindow = false;
+      this.setLoading(true);
+      try {
+        const response = await axios.post(`${BASE_API_URL}/user/new`, userData);
+        this.newUserData.responseData = response.data;
+        this.newUserData.failed = false;
+        await this.fetchUsers(this.currentPage, this.perPage);
+      } catch (error) {
+        this.newUserData.responseData = error.response.data;
+        this.newUserData.failed = true;
       } finally {
         this.setLoading(false);
       }

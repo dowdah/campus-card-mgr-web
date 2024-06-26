@@ -1,78 +1,68 @@
 <template>
-  <transition name="card-editor">
-    <div class="card-editor">
-      <form @submit.prevent="handleSubmit" class="editor-form">
-        <div class="editor-row">
-          <label for="name">持卡者姓名:</label>
-          <input :value="card.user.name" id="name" disabled/>
+  <div class="card-editor">
+    <form @submit.prevent="handleSubmit" class="editor-form">
+      <p class="editor-title">修改卡片状态</p>
+      <div class="editor-row">
+        <label for="name">持卡者姓名:</label>
+        <input :value="card.user.name" id="name" disabled/>
+      </div>
+      <div class="editor-row">
+        <label for="student_id">持卡者学号:</label>
+        <input :value="card.user.student_id" id="student_id" disabled/>
+      </div>
+      <div class="editor-row">
+        <label for="id">卡号:</label>
+        <input :value="card.id" id="id" disabled/>
+      </div>
+      <div class="editor-row">
+        <label for="created_at">创建时间:</label>
+        <input :value="card.created_at" id="created_at" disabled/>
+      </div>
+      <div class="editor-row">
+        <label for="expires_at">过期时间:</label>
+        <input :value="card.expires_at" id="expires_at" disabled/>
+      </div>
+      <div class="editor-row">
+        <label for="balance">余额:</label>
+        <input v-model="cardData.balance" id="balance" v-if="hasPermission('CHANGE_CARD_BALANCE')" type="number"
+               min="0" step="0.01" @blur="formatBalance"/>
+        <input :value="card.balance" id="balance" disabled v-else/>
+      </div>
+      <div class="editor-row">
+        <p>是否挂失:</p>
+        <div class="radio-group">
+          <label for="lost">是</label>
+          <input v-model="cardData.isLost" id="lost" type="radio" value="true"
+                 v-if="hasPermission('CHANGE_CARD_STATUS')"/>
+          <input :value="card.is_lost" id="lost" type="radio" disabled v-else/>
+          <label for="not-lost">否</label>
+          <input v-model="cardData.isLost" id="not-lost" type="radio" value="false"
+                 v-if="hasPermission('CHANGE_CARD_STATUS')"/>
+          <input :value="!card.is_lost" id="not-lost" type="radio" disabled v-else/>
         </div>
-        <div class="editor-row">
-          <label for="student_id">持卡者学号:</label>
-          <input :value="card.user.student_id" id="student_id" disabled/>
+      </div>
+      <div class="editor-row">
+        <p>是否禁用:</p>
+        <div class="radio-group">
+          <label for="banned">是</label>
+          <input v-model="cardData.isBanned" id="banned" type="radio" value="true"
+                 v-if="hasPermission('CHANGE_CARD_STATUS')"/>
+          <input :value="card.is_banned" id="banned" type="radio" disabled v-else/>
+          <label for="not-banned">否</label>
+          <input v-model="cardData.isBanned" id="not-banned" type="radio" value="false"
+                 v-if="hasPermission('CHANGE_CARD_STATUS')"/>
+          <input :value="!card.is_banned" id="not-banned" type="radio" disabled v-else/>
         </div>
-        <div class="editor-row">
-          <label for="id">卡号:</label>
-          <input :value="card.id" id="id" disabled/>
-        </div>
-        <div class="editor-row">
-          <label for="created_at">创建时间:</label>
-          <input :value="card.created_at" id="created_at" disabled/>
-        </div>
-        <div class="editor-row">
-          <label for="expires_at">过期时间:</label>
-          <input :value="card.expires_at" id="expires_at" disabled/>
-        </div>
-        <div class="editor-row">
-          <label for="balance">余额:</label>
-          <input v-model="cardData.balance" id="balance" v-if="hasPermission('CHANGE_CARD_BALANCE')" type="number"
-                 min="0" step="0.01" @blur="formatBalance"/>
-          <input :value="card.balance" id="balance" disabled v-else/>
-        </div>
-        <div class="editor-row">
-          <p>是否挂失:</p>
-          <div class="radio-group">
-            <label for="lost">是</label>
-            <input v-model="cardData.isLost" id="lost" type="radio" value="true"
-                   v-if="hasPermission('CHANGE_CARD_STATUS')"/>
-            <input :value="card.is_lost" id="lost" type="radio" disabled v-else/>
-            <label for="not-lost">否</label>
-            <input v-model="cardData.isLost" id="not-lost" type="radio" value="false" v-if="hasPermission('CHANGE_CARD_STATUS')"/>
-            <input :value="!card.is_lost" id="not-lost" type="radio" disabled v-else/>
-          </div>
-        </div>
-        <div class="editor-row">
-          <p>是否禁用:</p>
-          <div class="radio-group">
-            <label for="banned">是</label>
-            <input v-model="cardData.isBanned" id="banned" type="radio" value="true"
-                   v-if="hasPermission('CHANGE_CARD_STATUS')"/>
-            <input :value="card.is_banned" id="banned" type="radio" disabled v-else/>
-            <label for="not-banned">否</label>
-            <input v-model="cardData.isBanned" id="not-banned" type="radio" value="false"
-                   v-if="hasPermission('CHANGE_CARD_STATUS')"/>
-            <input :value="!card.is_banned" id="not-banned" type="radio" disabled v-else/>
-          </div>
-        </div>
-        <div class="editor-row">
-          <button type="submit" class="btn-save">保存</button>
-          <button type="button" @click="handleCancel" class="btn-cancel">取消</button>
-        </div>
-      </form>
-    </div>
-  </transition>
+      </div>
+      <div class="editor-row">
+        <button type="submit" class="btn-form">保存</button>
+        <button type="button" @click="handleCancel" class="btn-form">取消</button>
+      </div>
+    </form>
+  </div>
 </template>
 
 <style scoped>
-.card-editor-enter-active,
-.card-editor-leave-active {
-  transition: opacity 150ms ease;
-}
-
-.card-editor-enter-from,
-.card-editor-leave-to {
-  opacity: 0;
-}
-
 .card-editor {
   position: fixed;
   top: 0;
@@ -118,7 +108,7 @@ input:focus {
   outline: none;
 }
 
-.btn-save {
+.btn-form {
   padding: 10px 20px;
   border: none;
   border-radius: 5px;
@@ -128,22 +118,8 @@ input:focus {
   transition: background-color 0.3s;
 }
 
-.btn-save:hover {
+.btn-form:hover {
   background-color: #0056b3;
-}
-
-.btn-cancel {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-  background-color: #dc3545;
-  color: white;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.btn-cancel:hover {
-  background-color: #a71d2a;
 }
 
 .radio-group {
@@ -158,6 +134,12 @@ input:focus {
 
 .radio-group input {
   width: min-content;
+}
+
+.editor-title {
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
 }
 </style>
 
@@ -185,10 +167,10 @@ export default {
     postPayload() {
       let payload = {}
       if (this.hasPermission('CHANGE_CARD_STATUS')) {
-        if (typeof this.cardData.isBanned === 'string'){
+        if (typeof this.cardData.isBanned === 'string') {
           payload.is_banned = this.cardData.isBanned === 'true'
         }
-        if (typeof this.cardData.isLost === 'string'){
+        if (typeof this.cardData.isLost === 'string') {
           payload.is_lost = this.cardData.isLost === 'true'
         }
       }

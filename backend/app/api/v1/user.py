@@ -208,13 +208,12 @@ def new_user():
         response_json = {
             'success': False,
             'code': 400,
-            'msg': 'Invalid data provided'
+            'msg': '创建新用户失败，请检查学号、邮箱是否与已有用户重复。'
         }
     else:
         response_json = {
             'success': True,
             'code': 200,
-            'msg': 'User created successfully',
-            'user': user.to_json(include_sensitive=True)
+            'msg': '新用户创建成功。'
         }
     return jsonify(response_json), response_json['code']

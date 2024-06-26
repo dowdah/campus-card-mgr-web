@@ -90,7 +90,8 @@ class Role(db.Model):
                 Permission.EXPORT_REPORTS,
                 Permission.CHANGE_CARD_BALANCE,
                 Permission.ADD_USER,
-                Permission.DEL_REPORTS
+                Permission.DEL_REPORTS,
+                Permission.ADD_CARD
             ],
             '网站运营者': [
                 Permission.OPERATOR
@@ -132,6 +133,7 @@ class Permission:
     OPERATOR = 524288  # 操作员权限
     ADD_USER = 1048576  # 添加用户
     DEL_REPORTS = 2097152  # 删除报告
+    ADD_CARD = 4194304  # 添加卡
 
     @staticmethod
     def to_json():
@@ -317,6 +319,8 @@ class Card(db.Model):
 
     @balance.setter
     def balance(self, value):
+        if self._balance is None:
+            self._balance = 0.0
         if value >= 0:
             offset = value - self._balance
             if offset != 0:

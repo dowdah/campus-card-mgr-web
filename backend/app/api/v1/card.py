@@ -216,19 +216,6 @@ def renew_card(id):
         else:
             card = Card.query.filter_by(id=id).first()
             if card:
-                # if card.is_active:
-                #     card.renew(renew_days)
-                #     response_json = {
-                #         'success': True,
-                #         'code': 200,
-                #         'msg': 'Card renewed successfully'
-                #     }
-                # else:
-                #     response_json = {
-                #         'success': False,
-                #         'code': 400,
-                #         'msg': '无法延长状态为%s的一卡通有效期' % card.status
-                #     }
                 card.renew(renew_days)
                 response_json = {
                     'success': True,
@@ -245,26 +232,56 @@ def renew_card(id):
 
 
 @card_bp.route('/create/<int:id>', methods=['GET', 'POST'])
-@permission_required(Permission.DEL_CARD)
+@permission_required(Permission.ADD_CARD)
 def create_card(id):
     # 为用户创建一卡通
     user = User.query.filter_by(id=id).first()
-    if user:
+    if user is None:
+        response_json = {
+            'success': False,
+            'code': 404,
+            'msg': 'User not found'
+        }
+        return jsonify(response_json), response_json['code']
+    if request.method == 'GET':
         card = Card(user=user)
         db.session.add(card)
         db.session.commit()
         response_json = {
             'success': True,
             'code': 200,
-            'msg': 'Card created successfully',
-            'card': Card.query.filter_by(user=user).order_by(Card.id.desc()).first().to_json()
+            'msg': '一卡通创建成功。'
         }
-    else:
-        response_json = {
-            'success': False,
-            'code': 404,
-            'msg': 'User not found'
-        }
+    elif request.method == 'POST':
+        if g.data is None:
+            response_json = {
+                'success': False,
+                'code': 400,
+                'msg': 'No data provided'
+            }
+            return jsonify(response_json), response_json['code']
+        card = Card(user=user)
+        for k, v in g.data.items():
+            if k in EDITABLE_ATTRS:
+                setattr(card, k, v)
+            elif k == 'expires_at':
+                expires_at = datetime.strptime(v, '%Y-%m-%d')
+                card.expires_at = expires_at
+            else:
+                response_json = {
+                    'success': False,
+                    'code': 400,
+                    'msg': 'Unaccepted attributes: ' + k
+                }
+                break
+        else:
+            db.session.add(card)
+            db.session.commit()
+            response_json = {
+                'success': True,
+                'code': 200,
+                'msg': '一卡通创建成功。'
+            }
     return jsonify(response_json), response_json['code']
 
 
