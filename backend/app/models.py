@@ -130,7 +130,7 @@ class User(db.Model):
     student_id = db.Column(db.String(64), unique=True, index=True, nullable=False)  # 学号
     name = db.Column(db.String(64), unique=False, index=True, nullable=False)  # 姓名
     email = db.Column(db.String(64), unique=True, index=True, nullable=False)  # 邮箱，用于二步验证
-    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)  # 创建时间
+    created_at = db.Column(db.DateTime, default=datetime.datetime.now)  # 创建时间
     password_hash = db.Column(db.String(128))  # 密码哈希值
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))  # 用户的身份
     cards = db.relationship('Card', backref='user', lazy='dynamic', cascade='all, delete-orphan')  # 用户的一卡通
@@ -277,8 +277,8 @@ class Card(db.Model):
     transactions = db.relationship('Transaction', backref='card', lazy='dynamic', cascade='all, delete-orphan')  # 卡片的交易记录
     is_banned = db.Column(db.Boolean, default=False)  # 是否被禁用
     is_lost = db.Column(db.Boolean, default=False)  # 是否被挂失
-    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)  # 创建时间
-    expires_at = db.Column(db.DateTime, default=lambda: datetime.datetime.utcnow() + datetime.timedelta(days=4 * 365))
+    created_at = db.Column(db.DateTime, default=datetime.datetime.now)  # 创建时间
+    expires_at = db.Column(db.DateTime, default=lambda: datetime.datetime.now() + datetime.timedelta(days=4 * 365))
     # 卡片有效期，默认为4年
 
     def __repr__(self):
@@ -343,7 +343,7 @@ class Card(db.Model):
 
     @hybrid_property
     def is_expired(self):
-        return self.expires_at < datetime.datetime.utcnow()
+        return self.expires_at < datetime.datetime.now()
 
     @property
     def status(self):
@@ -402,7 +402,7 @@ class Transaction(db.Model):
     original_balance = db.Column(db.Float, nullable=True)
     current_balance = db.Column(db.Float, nullable=True)
     is_canceled = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.now)
     comments = db.Column(db.Text, nullable=True, default='')
 
     def __repr__(self):
@@ -460,7 +460,7 @@ class FinancialReport(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     json_data = db.Column(LONGTEXT, nullable=True)
     xlsx_data = db.Column(db.LargeBinary, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow, index=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.now, index=True, nullable=False)
     xlsx_expiration = db.Column(db.Interval, nullable=True, default=datetime.timedelta(days=7))
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     total_income = db.Column(db.Float, nullable=True)
@@ -477,7 +477,7 @@ class FinancialReport(db.Model):
 
     @hybrid_property
     def is_xlsx_expired(self):
-        return self.xlsx_expiration is not None and self.created_at + self.xlsx_expiration < datetime.datetime.utcnow()
+        return self.xlsx_expiration is not None and self.created_at + self.xlsx_expiration < datetime.datetime.now()
 
     @property
     def file_name(self):
