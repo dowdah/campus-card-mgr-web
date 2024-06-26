@@ -16,14 +16,14 @@
       <div class="form-group">
         <label for="cardId">卡号</label>
         <select id="cardId" v-model="selectedCardId" class="form-control">
-          <option value="">未选择</option>
+          <option value="">所有</option>
           <option v-for="cardId in cardIds" :key="cardId" :value="cardId">{{ cardId }}</option>
         </select>
       </div>
       <div class="form-group">
         <label for="transactionStatus">交易状态</label>
         <select id="transactionStatus" v-model="transactionStatus" class="form-control">
-          <option value="all">未选择</option>
+          <option value="all">所有</option>
           <option value="normal">正常</option>
           <option value="canceled">已撤销</option>
         </select>
