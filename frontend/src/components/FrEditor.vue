@@ -1,34 +1,22 @@
 <template>
-  <transition name="fr-editor">
-    <div class="fr-editor">
-      <form @submit.prevent="handleSubmit" class="editor-form">
-        <div class="editor-row">
-          <p>你正在修改ID为{{ fr.id }}的报告备注。</p>
-        </div>
-        <div class="editor-row">
-          <label for="comments">备注:</label>
-          <textarea v-model="frData.comments" id="comments"></textarea>
-        </div>
-        <div class="editor-row">
-          <button type="submit" class="btn-save">保存</button>
-          <button type="button" @click="handleCancel" class="btn-cancel">取消</button>
-        </div>
-      </form>
-    </div>
-  </transition>
+  <div class="fr-editor">
+    <form @submit.prevent="handleSubmit" class="editor-form">
+      <div class="editor-row">
+        <p>你正在修改ID为{{ fr.id }}的报告备注。</p>
+      </div>
+      <div class="editor-row">
+        <label for="comments">备注:</label>
+        <textarea v-model="frData.comments" id="comments"></textarea>
+      </div>
+      <div class="editor-row">
+        <button type="submit" class="btn-save">保存</button>
+        <button type="button" @click="handleCancel" class="btn-cancel">取消</button>
+      </div>
+    </form>
+  </div>
 </template>
 
 <style scoped>
-.fr-editor-enter-active,
-.fr-editor-leave-active {
-  transition: opacity 150ms ease;
-}
-
-.fr-editor-enter-from,
-.fr-editor-leave-to {
-  opacity: 0;
-}
-
 .fr-editor {
   position: fixed;
   top: 0;

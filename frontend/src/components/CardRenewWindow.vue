@@ -1,59 +1,57 @@
 <template>
-  <transition name="renew">
-    <div class="renew">
-      <div class="renew-content">
-        <p class="renew-title">延期一卡通</p>
-        <div class="editor-row">
-          <label for="name">持卡者姓名:</label>
-          <input :value="card.user.name" id="name" disabled/>
-        </div>
-        <div class="editor-row">
-          <label for="student_id">持卡者学号:</label>
-          <input :value="card.user.student_id" id="student_id" disabled/>
-        </div>
-        <div class="editor-row">
-          <label for="id">卡号:</label>
-          <input :value="card.id" id="id" disabled/>
-        </div>
-        <div class="editor-row">
-          <label for="created_at">创建时间:</label>
-          <input :value="card.created_at" id="created_at" disabled/>
-        </div>
-        <div class="editor-row">
-          <label for="expires_at">过期时间:</label>
-          <input :value="card.expires_at" id="expires_at" disabled/>
-        </div>
-        <div class="editor-row">
-          <label for="expected_expires_at">预计延期后过期时间:</label>
-          <input :value="expectedExpiresTime" id="expected_expires_at" disabled/>
-        </div>
-        <hr/>
-        <p class="renew-title">延期时长</p>
-        <div class="editor-row">
-          <label for="year">年:</label>
-          <input v-model="inputs.year" id="year" type="number"
-                 min="0" step="1"/>
-        </div>
-        <div class="editor-row">
-          <label for="month">月:</label>
-          <input v-model="inputs.month" id="month" type="number"
-                 min="0" step="1"/>
-        </div>
-        <div class="editor-row">
-          <label for="week">周:</label>
-          <input v-model="inputs.week" id="week" type="number"
-                 min="0" step="1"/>
-        </div>
-        <div class="editor-row">
-          <label for="day">日:</label>
-          <input v-model="inputs.day" id="day" type="number"
-                 min="0" step="1"/>
-        </div>
-        <button class="btn-confirm" @click="confirm">确认</button>
-        <button class="btn-close" @click="close">取消</button>
+  <div class="renew">
+    <div class="renew-content">
+      <p class="renew-title">延期一卡通</p>
+      <div class="editor-row">
+        <label for="name">持卡者姓名:</label>
+        <input :value="card.user.name" id="name" disabled/>
       </div>
+      <div class="editor-row">
+        <label for="student_id">持卡者学号:</label>
+        <input :value="card.user.student_id" id="student_id" disabled/>
+      </div>
+      <div class="editor-row">
+        <label for="id">卡号:</label>
+        <input :value="card.id" id="id" disabled/>
+      </div>
+      <div class="editor-row">
+        <label for="created_at">创建时间:</label>
+        <input :value="card.created_at" id="created_at" disabled/>
+      </div>
+      <div class="editor-row">
+        <label for="expires_at">过期时间:</label>
+        <input :value="card.expires_at" id="expires_at" disabled/>
+      </div>
+      <div class="editor-row">
+        <label for="expected_expires_at">预计延期后过期时间:</label>
+        <input :value="expectedExpiresTime" id="expected_expires_at" disabled/>
+      </div>
+      <hr/>
+      <p class="renew-title">延期时长</p>
+      <div class="editor-row">
+        <label for="year">年:</label>
+        <input v-model="inputs.year" id="year" type="number"
+               min="0" step="1"/>
+      </div>
+      <div class="editor-row">
+        <label for="month">月:</label>
+        <input v-model="inputs.month" id="month" type="number"
+               min="0" step="1"/>
+      </div>
+      <div class="editor-row">
+        <label for="week">周:</label>
+        <input v-model="inputs.week" id="week" type="number"
+               min="0" step="1"/>
+      </div>
+      <div class="editor-row">
+        <label for="day">日:</label>
+        <input v-model="inputs.day" id="day" type="number"
+               min="0" step="1"/>
+      </div>
+      <button class="btn-confirm" @click="confirm">确认</button>
+      <button class="btn-close" @click="close">取消</button>
     </div>
-  </transition>
+  </div>
 </template>
 
 <script>
@@ -104,16 +102,6 @@ export default {
 </script>
 
 <style scoped>
-.renew-enter-active,
-.renew-leave-active {
-  transition: opacity 150ms ease;
-}
-
-.renew-enter-from,
-.renew-leave-to {
-  opacity: 0;
-}
-
 .renew {
   position: fixed;
   top: 0;

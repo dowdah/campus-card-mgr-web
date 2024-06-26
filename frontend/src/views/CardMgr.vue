@@ -13,17 +13,19 @@
                @confirm="clearDeleteCardResponse">
     {{ deleteCardData.responseData.msg }}
   </AlertWindow>
+  <transition name="card-editor">
   <CardEditor v-if="modifyCardData.showModifyWindow" :card="modifyCardData.card"
-              @cancel="clearModifyCardData" @save="modifyCard">
-  </CardEditor>
+              @cancel="clearModifyCardData" @save="modifyCard" />
+  </transition>
   <AlertWindow :show-alert="modifyCardData.responseData !== null"
                :title="modifyCardData.failed ? '修改失败' : '修改成功'"
                @confirm="clearModifyCardResponse">
     {{ modifyCardData.responseData.msg }}
   </AlertWindow>
+  <transition name="renew">
   <CardRenewWindow v-if="renewCardData.showRenewWindow" :card="renewCardData.card"
-                   @close="clearRenewCardData" @confirm="renewCard">
-  </CardRenewWindow>
+                   @close="clearRenewCardData" @confirm="renewCard" />
+  </transition>
   <AlertWindow :show-alert="renewCardData.responseData !== null"
                :title="renewCardData.failed ? '延期失败' : '延期成功'"
                @confirm="clearRenewCardResponse">
@@ -202,6 +204,26 @@
 </template>
 
 <style scoped>
+.card-editor-enter-active,
+.card-editor-leave-active {
+  transition: opacity 100ms ease;
+}
+
+.card-editor-enter-from,
+.card-editor-leave-to {
+  opacity: 0;
+}
+
+.renew-enter-active,
+.renew-leave-active {
+  transition: opacity 100ms ease;
+}
+
+.renew-enter-from,
+.renew-leave-to {
+  opacity: 0;
+}
+
 input[type="date"].no-input {
   pointer-events: none;
 }

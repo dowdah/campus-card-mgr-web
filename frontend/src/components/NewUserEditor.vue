@@ -1,7 +1,7 @@
 <template>
   <div class="user-editor">
     <form @submit.prevent="handleSubmit" class="editor-form">
-      <p class="editor-title">修改用户信息</p>
+      <p class="editor-title">创建新用户</p>
       <div class="editor-row">
         <label for="name">姓名:</label>
         <input v-model="userData.name" id="name" required/>
@@ -28,7 +28,7 @@
         <textarea v-model="userData.comments" id="comments"></textarea>
       </div>
       <div class="editor-row">
-        <button type="submit" class="btn-form">保存</button>
+        <button type="submit" class="btn-form" :disabled="notReadyForSubmit">提交</button>
         <button type="button" @click="handleCancel" class="btn-form">取消</button>
       </div>
     </form>
@@ -95,6 +95,15 @@ input:focus {
   background-color: #0056b3;
 }
 
+.btn-form:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.btn-form:disabled:hover {
+  background-color: #ccc;
+}
+
 .radio-group {
   display: flex;
   align-items: center;
@@ -123,33 +132,37 @@ input:focus {
 
 <script>
 export default {
-  props: {
-    user: {
-      type: Object,
-      required: true,
-    },
-  },
+  emits: ['submit', 'cancel'],
   data() {
     return {
       userData: {
-        name: this.user.name,
-        student_id: this.user.student_id,
-        email: this.user.email,
-        confirmed: this.user.confirmed,
-        comments: this.user.comments,
+        name: '',
+        student_id: '',
+        email: '',
+        confirmed: true,
+        comments: ''
       },
     };
   },
   methods: {
     handleSubmit() {
+      if (this.notReadyForSubmit) {
+        return;
+      }
       if (typeof this.userData.confirmed === 'string') {
         this.userData.confirmed = this.userData.confirmed === 'true';
       }
-      this.$emit('save', this.userData, this.user.id);
+      console.log(this.userData);
+      this.$emit('submit', this.userData);
     },
     handleCancel() {
       this.$emit('cancel');
     },
+  },
+  computed: {
+    notReadyForSubmit() {
+      return this.userData.name === '' || this.userData.student_id === '' || this.userData.email === '';
+    }
   }
 };
 </script>
