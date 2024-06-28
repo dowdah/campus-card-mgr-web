@@ -109,7 +109,7 @@ class Permission:
     BACKUP_DATA = 65536  # 备份数据
     RESTORE_DATA = 131072  # 恢复数据
     CHANGE_CARD_BALANCE = 262144  # 更改卡余额
-    OPERATOR = 524288  # 操作员权限
+    OPERATOR = 524288  # 最高权限
     ADD_USER = 1048576  # 添加用户
     DEL_REPORTS = 2097152  # 删除报告
     ADD_CARD = 4194304  # 添加卡

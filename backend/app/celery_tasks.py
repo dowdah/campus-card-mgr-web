@@ -8,11 +8,6 @@ from . import mail
 celery = current_app.celery
 
 
-@celery.task(name='app.reverse')
-def reverse(string):
-    return string[::-1]
-
-
 @celery.task(name='app.fr_init_async', bind=True)
 def fr_init_async(self, fr_id):
     d = dict()

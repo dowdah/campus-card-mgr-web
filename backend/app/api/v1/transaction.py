@@ -286,7 +286,7 @@ def make_my_transaction():
 
 @transaction_bp.route('/update/<int:transaction_id>', methods=['PUT'])
 @permission_required(Permission.VIEW_USER_INFO)
-def update_fr(transaction_id):
+def update_transaction(transaction_id):
     transaction = Transaction.query.get_or_404(transaction_id)
     if g.data is None:
         response_json = {

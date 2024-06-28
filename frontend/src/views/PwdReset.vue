@@ -35,11 +35,11 @@
       </div>
       <div class="form-group">
         <label for="verification_code">验证码</label>
-        <input type="text" v-model="token" required/>
+        <input type="text" v-model="token" required autocomplete="off" />
       </div>
       <div class="form-group">
         <label for="new_password">新密码</label>
-        <input type="password" v-model="password" required/>
+        <input type="password" v-model="password" required autocomplete="off" />
       </div>
       <button type="submit" class="email-button" :disabled="isLoading">重置密码</button>
     </form>
