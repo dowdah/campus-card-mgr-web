@@ -1,12 +1,12 @@
 <template>
-  <div class="fr-editor">
+  <div class="transaction-editor">
     <form @submit.prevent="handleSubmit" class="editor-form">
       <div class="editor-row">
-        <p>你正在修改ID为{{ fr.id }}的报告备注。</p>
+        <p>你正在修改ID为{{ transaction.id }}的交易备注。</p>
       </div>
       <div class="editor-row">
         <label for="comments">备注:</label>
-        <textarea v-model="frData.comments" id="comments"></textarea>
+        <textarea v-model="transactionData.comments" id="comments"></textarea>
       </div>
       <div class="editor-row">
         <button type="submit" class="btn-submit">保存</button>
@@ -17,7 +17,7 @@
 </template>
 
 <style scoped>
-.fr-editor {
+.transaction-editor {
   position: fixed;
   top: 0;
   left: 0;
@@ -99,21 +99,21 @@ input:focus {
 <script>
 export default {
   props: {
-    fr: {
+    transaction: {
       type: Object,
       required: true,
     },
   },
   data() {
     return {
-      frData: {
-        comments: this.fr.comments
+      transactionData: {
+        comments: this.transaction.comments
       },
     };
   },
   methods: {
     handleSubmit() {
-      this.$emit('save', this.frData, this.fr.id);
+      this.$emit('save', this.transactionData, this.transaction.id);
     },
     handleCancel() {
       this.$emit('cancel');
