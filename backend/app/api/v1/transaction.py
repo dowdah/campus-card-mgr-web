@@ -282,3 +282,33 @@ def make_my_transaction():
             'msg': '卡片未找到。'
         }
     return jsonify(response_json), response_json['code']
+
+
+@transaction_bp.route('/update/<int:transaction_id>', methods=['PUT'])
+@permission_required(Permission.VIEW_USER_INFO)
+def update_transaction(transaction_id):
+    transaction = Transaction.query.get_or_404(transaction_id)
+    if g.data is None:
+        response_json = {
+            'success': False,
+            'code': 400,
+            'msg': 'No data provided'
+        }
+    else:
+        comments = g.data.get('comments')
+        if comments is not None:
+            transaction.comments = comments
+            db.session.add(transaction)
+            db.session.commit()
+            response_json = {
+                'success': True,
+                'code': 200,
+                'msg': '交易备注更新成功。'
+            }
+        else:
+            response_json = {
+                'success': False,
+                'code': 400,
+                'msg': 'No data provided'
+            }
+    return jsonify(response_json), response_json['code']

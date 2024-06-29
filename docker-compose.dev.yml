@@ -34,6 +34,7 @@ services:
       - MAIL_ACCOUNT=${MAIL_ACCOUNT}
       - MAIL_PASSWORD=${MAIL_PASSWORD}
       - MAIL_ADMIN=${MAIL_ADMIN}
+      - TZ=${SERVER_TIMEZONE}
       - FLASK_CONFIG=development
       - FLASK_APP=wsgi.py
       - FLASK_DEBUG=1
